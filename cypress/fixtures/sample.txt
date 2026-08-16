@@ -1,0 +1,1 @@
+This is a real sample text file used by Cypress tests to upload as a resource.
