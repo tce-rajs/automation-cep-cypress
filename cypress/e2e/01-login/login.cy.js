@@ -2,12 +2,17 @@
 
 import { LoginPage } from "../../pages/LoginPage";
 
-const VALID_PIN = "75583";
-const INVALID_PIN = "12345";
-const SCHOOL_SEARCH_TERM = "velammal";
-const SCHOOL_NAME = "Velammal School";
-const USERNAME = "support.admin";
-const PASSWORD = "Tce#12345";
+// Credentials come from cypress.env.json (gitignored) or CYPRESS_* environment
+// variables. These used to be duplicated literals in this file AND in
+// cypress/support/commands.js -- when the account changed, updating only one
+// left five login tests authenticating with a dead PIN. Both files now read
+// the same single source.
+const VALID_PIN = Cypress.env("VALID_PIN");
+const INVALID_PIN = Cypress.env("INVALID_PIN");
+const SCHOOL_SEARCH_TERM = Cypress.env("SCHOOL_SEARCH_TERM");
+const SCHOOL_NAME = Cypress.env("SCHOOL_NAME");
+const USERNAME = Cypress.env("USERNAME");
+const PASSWORD = Cypress.env("PASSWORD");
 
 describe("Login - Guest Mode and Sign In modal", () => {
   it("TC-LOGIN-001: shows Guest Mode message after opening the app", () => {
@@ -68,7 +73,13 @@ describe("Login - PIN login", () => {
   it("TC-LOGIN-009: shows an error banner for an invalid PIN", () => {
     cy.openSignInModal();
     cy.enterPin(INVALID_PIN);
-    cy.contains("next step required", { timeout: 15000 }).should("be.visible");
+    // The app's real invalid-PIN banner reads "Invalid Pin. Please try again."
+    // This previously asserted "next step required", which only ever appeared
+    // because the old INVALID_PIN (12345) happened to hit an account in a
+    // pending state rather than being rejected outright -- so the test was
+    // pinned to a quirk of one PIN value instead of to invalid-PIN behaviour.
+    // Matched case-insensitively so a capitalisation change doesn't fail it.
+    cy.contains(/invalid pin/i, { timeout: 15000 }).should("be.visible");
     cy.contains("Welcome Back!").should("not.exist");
   });
 
@@ -79,10 +90,13 @@ describe("Login - PIN login", () => {
 
   it("TC-LOGIN-011: does not authenticate with an incomplete PIN", () => {
     cy.openSignInModal();
-    cy.enterPin("755");
+    // Derived from VALID_PIN rather than hardcoded, so changing the PIN in
+    // cypress.env.json can't silently leave this test typing digits from a
+    // dead account's PIN.
+    cy.enterPin(VALID_PIN.slice(0, 3));
     cy.wait(2000);
     cy.contains("Welcome Back!").should("not.exist");
-    LoginPage.pinDigitInput(0).should("have.value", "7");
+    LoginPage.pinDigitInput(0).should("have.value", VALID_PIN[0]);
   });
 
   it("TC-LOGIN-012: rejects non-numeric characters in the PIN boxes", () => {
@@ -94,12 +108,14 @@ describe("Login - PIN login", () => {
   it("TC-LOGIN-013: supports backspace correction while typing the PIN", () => {
     cy.openSignInModal();
     // Type a wrong 3rd digit on purpose, then backspace and correct it so the
-    // final PIN entered is the valid one (75583).
-    cy.enterPin("756");
+    // final PIN entered is the valid one. All digits are derived from
+    // VALID_PIN so this stays correct if the account's PIN changes.
+    const wrongThirdDigit = String((Number(VALID_PIN[2]) + 1) % 10);
+    cy.enterPin(VALID_PIN.slice(0, 2) + wrongThirdDigit);
     LoginPage.pinDigitInput(2).type("{backspace}", { force: true });
-    LoginPage.pinDigitInput(2).type("5", { force: true });
-    LoginPage.pinDigitInput(3).type("8", { force: true });
-    LoginPage.pinDigitInput(4).type("3", { force: true });
+    LoginPage.pinDigitInput(2).type(VALID_PIN[2], { force: true });
+    LoginPage.pinDigitInput(3).type(VALID_PIN[3], { force: true });
+    LoginPage.pinDigitInput(4).type(VALID_PIN[4], { force: true });
     cy.contains("Welcome Back!", { timeout: 20000 }).should("be.visible");
   });
 });
@@ -212,7 +228,7 @@ describe("Login - Password login", () => {
 
   it("TC-LOGIN-027: does not authenticate while switching login type mid-entry", () => {
     cy.openSignInModal();
-    cy.enterPin("755");
+    cy.enterPin(VALID_PIN.slice(0, 3));
     LoginPage.pinPasswordLink().click({ force: true });
     LoginPage.pinLink().click({ force: true });
     cy.contains("Welcome Back!").should("not.exist");
@@ -279,7 +295,13 @@ describe("Login - Dashboard and session", () => {
   it("TC-LOGIN-039: an invalid PIN does not block switching to Password login", () => {
     cy.openSignInModal();
     cy.enterPin(INVALID_PIN);
-    cy.contains("next step required", { timeout: 15000 }).should("be.visible");
+    // The app's real invalid-PIN banner reads "Invalid Pin. Please try again."
+    // This previously asserted "next step required", which only ever appeared
+    // because the old INVALID_PIN (12345) happened to hit an account in a
+    // pending state rather than being rejected outright -- so the test was
+    // pinned to a quirk of one PIN value instead of to invalid-PIN behaviour.
+    // Matched case-insensitively so a capitalisation change doesn't fail it.
+    cy.contains(/invalid pin/i, { timeout: 15000 }).should("be.visible");
     LoginPage.pinPasswordLink().click({ force: true });
     cy.selectSchool(SCHOOL_SEARCH_TERM, SCHOOL_NAME);
     LoginPage.usernameInput().type(USERNAME, { force: true });

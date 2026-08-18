@@ -235,9 +235,20 @@ describe("Navigation - Switching classes end to end", () => {
 
   it("TC-NAV-025: switching to a different class updates Current Class", () => {
     cy.get('[data-qa-id="playlist-current-grade-subject-btn"]').invoke("text").then((before) => {
-      PlaylistPage.openClassPopup();
-      cy.get('[data-qa-id="playlist-recently-selected-class-btn"]').eq(2).click({ force: true });
-      cy.wait(2000);
+      // This used the "recently selected classes" list (originally .eq(2),
+      // then "any entry whose label differs"). Both fail on this account for
+      // the same reason: the recent list is populated by THIS SUITE, and
+      // goToTargetClass() always navigates to the same class, so every recent
+      // entry is Class 8A | Computer Science with only the topic differing.
+      // Clicking one changes the topic but never the class -- confirmed by
+      // screenshot: the topic moved to "2.2 Linking Webpages" while the class
+      // label stayed identical, so the assertion failed on correct behaviour.
+      //
+      // Switching SUBJECT via "All My Classes" is what actually changes the
+      // current class, and goToOtherSubject() resolves a different subject at
+      // runtime so it survives curriculum changes.
+      // (TC-NAV-027 separately covers the recent-classes list itself.)
+      PlaylistPage.goToOtherSubject();
       cy.get('[data-qa-id="playlist-current-grade-subject-btn"]').invoke("text").should("not.equal", before.trim());
     });
   });

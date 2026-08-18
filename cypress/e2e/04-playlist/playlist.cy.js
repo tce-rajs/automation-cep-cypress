@@ -283,18 +283,27 @@ describe("Playlist - Resource List Loading", () => {
   // topics, both present in the same curriculum book response that
   // populates the Chapter/Topic popup.
   it("TC-RLL-006: baseline/checkpoint topics receive special handling", () => {
-    // Just opening the popup on whatever topic is already active doesn't
-    // fire a new request -- confirmed via a prior run, the book data is
-    // already cached from the initial dashboard load. Switching class/
-    // chapter/topic via goToKnownContentTopic() reliably does trigger a
-    // fresh fetch (same as TC-RLL-004 above), so the intercept is armed
-    // before that instead.
+    // This test previously called goToKnownContentTopic() here and timed out
+    // with "No request ever occurred" on every run. The reason: the
+    // beforeEach ALREADY navigated to that exact class/chapter/topic, so
+    // navigating there again is a no-op client-side and fires no request --
+    // the app caches the curriculum book per subject. Changing SUBJECT is
+    // what forces a genuine re-fetch, so that is what we do here.
+    // Leaving the subject forces a fetch, but that first response is the OTHER
+    // subject's book, which has no baseline/checkpoint topics -- asserting on
+    // it fails on correct data. So bounce away and come back: the second fetch
+    // is the configured subject's book, which is the one under test.
     cy.intercept("GET", "**/curriculum/book/*").as("getBook");
-    PlaylistPage.goToKnownContentTopic();
+    PlaylistPage.goToOtherSubject();
+    cy.wait("@getBook", { timeout: 20000 });
+    PlaylistPage.goToTargetClass();
     cy.wait("@getBook", { timeout: 20000 }).then((interception) => {
       const body = JSON.stringify(interception.response.body || {});
       const hasBaselineOrCheckpoint = body.includes("-bl") || body.includes("cktp-");
-      expect(hasBaselineOrCheckpoint).to.be.true;
+      expect(
+        hasBaselineOrCheckpoint,
+        "curriculum book contains baseline (-bl) or checkpoint (cktp-) topic markers"
+      ).to.be.true;
     });
   });
 });
@@ -492,8 +501,7 @@ describe("Playlist - Remove Resource", () => {
     const title = `Playlist Remove Test ${AddResourcePage.uniqueSuffix()}`;
     AddResourcePage.createThrowawayAsset(title);
     cy.contains('[data-qa-id="playlist-asset-card"]', title).should("be.visible");
-    cy.contains('[data-qa-id="playlist-asset-card"]', title).find('[data-qa-id="playlist-asset-overflow-icon-btn"]').click({ force: true });
-    cy.wait(500);
+    AddResourcePage.openAssetCardMenu(title);
     cy.get('[data-qa-id="playlist-asset-remove-btn"]').filter(":visible").click({ force: true });
     cy.wait(500);
     cy.get('[data-qa-id="playlist-asset-remove-confirm-btn"]').filter(":visible").click({ force: true });

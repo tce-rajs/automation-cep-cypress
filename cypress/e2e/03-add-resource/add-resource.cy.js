@@ -83,13 +83,20 @@ describe("Add Resource - Create form", () => {
     cy.get('input[formcontrolname="grade_subject"]').should("be.disabled");
   });
 
-  // TC-AR-011 (Chapter/Topic required) and TC-AR-012 (select via separate
-  // component) are skipped: in this app version, Chapter & Topic is always
-  // auto-filled from the active lesson and is a disabled/read-only field,
-  // same as Grade & Subject -- there is no separate selector to open, so
-  // these two scenarios from the test case are not reproducible here.
-  it.skip("TC-AR-011: Chapter/Topic required validation (not reproducible -- field is always auto-filled)", () => {});
-  it.skip("TC-AR-012: select Chapter/Topic via separate component (not reproducible -- field is read-only here)", () => {});
+  // TC-AR-011 (Chapter/Topic required validation) and TC-AR-012 (select
+  // Chapter/Topic via a separate component) have been REMOVED from this spec.
+  //
+  // Chapter & Topic being auto-filled and disabled in the Create form is
+  // CONFIRMED INTENDED BEHAVIOUR, not a defect: the asset is always created
+  // against the lesson topic the teacher is currently on, so there is nothing
+  // to choose and nothing that can be left empty. Both test cases assume a
+  // selector that the product deliberately does not offer, so they describe a
+  // product that does not exist rather than a gap in coverage.
+  //
+  // TC-AR-014 below still covers the behaviour that DOES matter here: the
+  // field is always populated, so submission is never blocked by it.
+  // Recorded as "Not Applicable - By Design" in the Execution sheet of
+  // Test_Cases/03_Add_Resource/Add_Resource_Test_Cases.xlsx.
 
   it("TC-AR-008: requires the Title field", () => {
     // Attaching a file auto-fills Title from the filename, so clear it back
@@ -229,11 +236,15 @@ describe("Add Resource - Library", () => {
   it("TC-AR-026: attaches a Library resource only after Add to playlist is clicked", () => {
     LibraryPage.search("Database");
     LibraryPage.playlistAssetCount().then((before) => {
-      LibraryPage.resultCardAt(3).click({ force: true });
-      cy.wait(2000);
-      cy.get('[data-qa-id="tce-library-pdf-add-playlist-btn"]').click({ force: true });
-      cy.wait(2500);
-      cy.get('[data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", before);
+      // Was hardcoded to index 3, which has now been consumed exactly as the
+      // comment above predicted. Pick an unattached result at runtime instead.
+      LibraryPage.firstUnattachedResultIndex().then((index) => {
+        LibraryPage.resultCardAt(index).click({ force: true });
+        cy.wait(2000);
+        cy.get('[data-qa-id="tce-library-pdf-add-playlist-btn"]').click({ force: true });
+        cy.wait(2500);
+        cy.get('[data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", before);
+      });
     });
   });
 
@@ -296,17 +307,18 @@ describe("Add Resource - DropIt", () => {
     cy.get("canvas, svg, img").should("have.length.greaterThan", 0);
   });
 
-  // TC-AR-032 to TC-AR-034 cover the actual file-transfer outcome (a real
-  // file arriving from a paired device and auto-attaching). That's out of
-  // scope by design for this suite: DropIt coverage here is limited to
-  // confirming the pairing interface itself opens correctly (TC-AR-031
-  // above) -- the QR code and Connection Status are the only things we
-  // verify. Simulating a real transfer would require either a second
-  // physical device or writing test data directly into the app's Firestore
-  // pairing collection, neither of which is part of this suite's scope.
-  it.skip("TC-AR-032: file received via paired DropIt is auto-uploaded (out of scope -- only the pairing UI itself is covered, see TC-AR-031)", () => {});
-  it.skip("TC-AR-033: DropIt file is auto-attached after upload (out of scope -- only the pairing UI itself is covered, see TC-AR-031)", () => {});
-  it.skip("TC-AR-034: DropIt requires no extra click after file arrival (out of scope -- only the pairing UI itself is covered, see TC-AR-031)", () => {});
+  // TC-AR-032, TC-AR-033 and TC-AR-034 (the real file-transfer outcome: a
+  // file arriving from a paired device and auto-attaching) have been REMOVED
+  // from this spec rather than left as permanent it.skip() placeholders.
+  // They are not automatable here -- reproducing a transfer needs a second
+  // physical device, or writing directly into the app's Firestore pairing
+  // collection, neither of which this suite does. They are recorded as
+  // "Not Automatable - Manual" in the Execution sheet of
+  // Test_Cases/03_Add_Resource/Add_Resource_Test_Cases.xlsx, which is where
+  // manual-only cases belong.
+  //
+  // DropIt coverage that IS automatable stays above: TC-AR-031 confirms the
+  // pairing interface opens with its QR code and Connection Status.
 });
 
 describe("Add Resource - AI-Assist", () => {
@@ -469,6 +481,13 @@ describe("Add Resource - Business rules and regression", () => {
     cy.get('[data-qa-id="add-resource-action-dropit"]').click({ force: true });
     cy.wait(1000);
     cy.contains("Drop It").should("be.visible");
+    // Every other step here closes its panel before the next FAB click, but
+    // DropIt's close was missing -- the panel stayed open and its Close button
+    // physically covered the FAB, so the next AddResourcePage.open() failed
+    // with "covered by another element". Latent bug: this test only started
+    // running once the hidden-drawer issue was fixed.
+    cy.get('[data-qa-id="drop-it-close-btn"]').click({ force: true });
+    cy.wait(500);
 
     AddResourcePage.open();
     cy.get('[data-qa-id="add-resource-action-ai-assist"]').click({ force: true });

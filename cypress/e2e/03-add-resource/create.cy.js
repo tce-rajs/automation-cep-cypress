@@ -109,20 +109,20 @@ describe("Create - Chapter/Topic selector", () => {
     cy.get('input[formcontrolname="chapter_topic"]').should("not.have.value", "");
   });
 
-  // TC-CREATE-009 to TC-CREATE-013 and TC-CREATE-029 all assume the Create
-  // form's Chapter/Topic field opens an interactive selector (chapter list +
-  // topic list) that the user can browse. In this app version the field is
-  // disabled/read-only and always auto-filled from the currently active
-  // lesson topic -- clicking it does not open any selector, so there is
-  // nothing to browse, select from, or compare against the Navigation
-  // module's selector. Confirmed by direct exploration (clicking the field
-  // wrapper produces no visible change), same finding as TC-AR-011/012.
-  it.skip("TC-CREATE-009: Chapter/Topic selector opens from Create form (not reproducible -- field is read-only here)", () => {});
-  it.skip("TC-CREATE-010: Chapter list is displayed in the selector (not reproducible -- no selector opens)", () => {});
-  it.skip("TC-CREATE-011: Topics update when a Chapter is selected (not reproducible -- no selector opens)", () => {});
-  it.skip("TC-CREATE-012: user can select a Topic in the selector (not reproducible -- no selector opens)", () => {});
-  it.skip("TC-CREATE-013: selector closes immediately after Topic selection (not reproducible -- no selector opens)", () => {});
-  it.skip("TC-CREATE-029: Create selector is separate from the Navigation selector (not reproducible -- Create has no selector to compare)", () => {});
+  // TC-CREATE-009 to TC-CREATE-013 and TC-CREATE-029 have been REMOVED from
+  // this spec. They all assume the Create form's Chapter/Topic field opens an
+  // interactive selector (chapter list + topic list) the user can browse.
+  //
+  // It does not, and that is CONFIRMED INTENDED BEHAVIOUR, not a defect: a
+  // custom asset is always created against the lesson topic the teacher is
+  // currently on, so the field is auto-filled and disabled by design -- the
+  // same as Grade & Subject. These six cases describe a selector the product
+  // deliberately does not offer, so they are not a coverage gap.
+  //
+  // TC-CREATE-014 below still covers what matters: the field is always
+  // populated, so submission is never blocked by it being empty. Recorded as
+  // "Not Applicable - By Design" in the Execution sheet of
+  // Test_Cases/03_Add_Resource/Create_Test_Cases.xlsx.
 
   it("TC-CREATE-014: Chapter/Topic is always populated, so submission is never blocked by it being empty", () => {
     // The field cannot be cleared through the UI (read-only/auto-filled), so
@@ -289,20 +289,38 @@ describe("Create - Edit mode", () => {
   it("TC-CREATE-031: edit mode opens an existing asset in the same form", () => {
     const title = `Edit Mode Check ${AddResourcePage.uniqueSuffix()}`;
     AddResourcePage.createThrowawayAsset(title);
-    cy.contains('[data-qa-id="playlist-asset-card"]', title).find('[data-qa-id="playlist-asset-overflow-icon-btn"]').click({ force: true });
-    cy.wait(500);
+    AddResourcePage.openAssetCardMenu(title);
     cy.get('[data-qa-id="playlist-asset-edit-btn"]').filter(":visible").click({ force: true });
     cy.wait(1000);
+    // In edit mode the form shows the CURRENT file read-only -- there is no
+    // input[type=file] in the DOM at all until the "Replace File" toggle is
+    // switched on. Confirmed from the TC-CREATE-032 failure screenshot: the
+    // form was open and correctly populated (title, grade/subject,
+    // chapter/topic, existing filename) with the toggle off and zero file
+    // inputs. Without this the test failed with a misleading "Expected to find
+    // element: input[type=file]", which looked like the form hadn't opened.
+    cy.contains("Replace File").click({ force: true });
+    cy.wait(500);
+    cy.get('input[type="file"]').should("exist");
     cy.get('input[formcontrolname="title"]').should("have.value", title);
   });
 
   it("TC-CREATE-032: an existing asset file can be replaced in edit mode", () => {
     const title = `Edit Replace Check ${AddResourcePage.uniqueSuffix()}`;
     AddResourcePage.createThrowawayAsset(title);
-    cy.contains('[data-qa-id="playlist-asset-card"]', title).find('[data-qa-id="playlist-asset-overflow-icon-btn"]').click({ force: true });
-    cy.wait(500);
+    AddResourcePage.openAssetCardMenu(title);
     cy.get('[data-qa-id="playlist-asset-edit-btn"]').filter(":visible").click({ force: true });
     cy.wait(1000);
+    // In edit mode the form shows the CURRENT file read-only -- there is no
+    // input[type=file] in the DOM at all until the "Replace File" toggle is
+    // switched on. Confirmed from the TC-CREATE-032 failure screenshot: the
+    // form was open and correctly populated (title, grade/subject,
+    // chapter/topic, existing filename) with the toggle off and zero file
+    // inputs. Without this the test failed with a misleading "Expected to find
+    // element: input[type=file]", which looked like the form hadn't opened.
+    cy.contains("Replace File").click({ force: true });
+    cy.wait(500);
+    cy.get('input[type="file"]').should("exist");
     AddResourcePage.attachFile(`replacement-${AddResourcePage.uniqueSuffix()}.txt`, "text/plain");
     cy.get('button[type="submit"]').should("not.be.disabled").click({ force: true });
     cy.get(".add-custom-asset", { timeout: 20000 }).should("not.exist");
@@ -314,10 +332,19 @@ describe("Create - Edit mode", () => {
   it("TC-CREATE-033: an invalid replacement file is rejected in edit mode", () => {
     const title = `Edit Invalid Check ${AddResourcePage.uniqueSuffix()}`;
     AddResourcePage.createThrowawayAsset(title);
-    cy.contains('[data-qa-id="playlist-asset-card"]', title).find('[data-qa-id="playlist-asset-overflow-icon-btn"]').click({ force: true });
-    cy.wait(500);
+    AddResourcePage.openAssetCardMenu(title);
     cy.get('[data-qa-id="playlist-asset-edit-btn"]').filter(":visible").click({ force: true });
     cy.wait(1000);
+    // In edit mode the form shows the CURRENT file read-only -- there is no
+    // input[type=file] in the DOM at all until the "Replace File" toggle is
+    // switched on. Confirmed from the TC-CREATE-032 failure screenshot: the
+    // form was open and correctly populated (title, grade/subject,
+    // chapter/topic, existing filename) with the toggle off and zero file
+    // inputs. Without this the test failed with a misleading "Expected to find
+    // element: input[type=file]", which looked like the form hadn't opened.
+    cy.contains("Replace File").click({ force: true });
+    cy.wait(500);
+    cy.get('input[type="file"]').should("exist");
     cy.get('input[type="file"]').then(($input) => {
       const accept = $input.attr("accept") || "";
       expect(accept).to.not.contain(".exe");

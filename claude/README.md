@@ -17,12 +17,16 @@ Read these in order:
 3. **[SELECTORS_REFERENCE.md](SELECTORS_REFERENCE.md)** — quick lookup of
    confirmed real selectors by module, so you don't have to re-explore the
    live DOM for things already found.
-4. **[../DEVELOPER_QUESTIONS.md](../DEVELOPER_QUESTIONS.md)** (project
-   root, not in this folder) — every skipped test case with the specific
-   question needed to unblock it, several already answered by the dev team
-   with exact endpoints/selectors/storage schemas.
-5. **[../TEST_REPORT.md](../TEST_REPORT.md)** (project root) — current
-   pass/fail/skip counts per module.
+4. **[../MODULE_COVERAGE.md](../MODULE_COVERAGE.md)** (project root) — what
+   each app module has automated vs. pending, and why each pending item is
+   blocked (missing curriculum content, missing selectors, external code,
+   real elapsed time).
+
+> Two files this list used to point at are gone: `DEVELOPER_QUESTIONS.md`
+> was never committed, and `TEST_REPORT.md` was removed as redundant --
+> per-run results now live in the Allure report (`npm run test:report`) and
+> per-test-case status in the Execution sheet of the `Test_Cases/*.xlsx`
+> workbooks.
 
 ## The core rule this whole project follows: verify, don't guess
 
