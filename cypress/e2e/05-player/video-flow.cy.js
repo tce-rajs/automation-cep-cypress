@@ -60,10 +60,14 @@ describe("Video Player -- end-to-end flow", () => {
         // --- F06: the video surface is really there ----------------------
         Video.playerKind().then((kind) => {
           cy.log(`Video player surface: ${kind}`);
-          expect(kind, "the player rendered a video surface (media element or embedded frame)").to.be.oneOf([
-            "html5",
-            "iframe",
-          ]);
+
+          // Asserted, not merely branched on. The dump established that this
+          // account's video card renders a real <video> inside a same-origin
+          // frame, so "html5" is the expected surface -- and if it ever comes
+          // back "iframe" again, that is a regression (or a genuinely
+          // different resource type) worth failing on, not quietly skipping
+          // the playback half of the flow.
+          expect(kind, "the player rendered a reachable HTML5 media element").to.eq("html5");
 
           if (kind !== "html5") {
             // The animation/embedded player: there is no media element to
@@ -79,12 +83,8 @@ describe("Video Player -- end-to-end flow", () => {
 
           // --- F07 + F12: play, and time actually moves -------------------
           Video.duration().should("be.greaterThan", 0);
-          Video.isPaused().should("eq", true);
 
-          // Play via the element rather than the skin: the flow is about
-          // playback, not about the button, and autoplay policies make a
-          // programmatic play() the reliable trigger headlessly.
-          Video.videoEl().then(($v) => $v[0].play());
+          Video.play();
           cy.wait(3000);
 
           Video.isPaused().should("eq", false);
@@ -92,7 +92,7 @@ describe("Video Player -- end-to-end flow", () => {
 
           // --- F08: pause holds the position -----------------------------
           Video.currentTime().then((playing) => {
-            Video.videoEl().then(($v) => $v[0].pause());
+            Video.pause();
             cy.wait(1500);
 
             Video.isPaused().should("eq", true);

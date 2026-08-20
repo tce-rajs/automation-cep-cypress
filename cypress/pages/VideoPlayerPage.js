@@ -121,7 +121,12 @@ export const VideoPlayerPage = {
     this.cards().first().scrollIntoView();
     this.cards().first().click({ force: true });
 
-    return PlayerPage.shouldBeOpen();
+    // The video resource fetches its asset before the player chrome paints, so
+    // the default 15s is not always enough -- that alone made the flow fail its
+    // first attempt and pass on a retry.
+    PlayerPage.shouldBeOpen(40000);
+    // Player chrome up is not the same as media ready -- see waitForMedia.
+    return this.waitForMedia();
   },
 
   open() {
@@ -138,49 +143,155 @@ export const VideoPlayerPage = {
     return PlayerPage.shouldBeClosed();
   },
 
-  // ---- Which player actually opened --------------------------------------
+  // ---- THE MEDIA ELEMENT IS INSIDE A SAME-ORIGIN IFRAME -------------------
   //
-  // Two different players can answer to a "video" card (see the header), and
-  // they support completely different assertions. Rather than assume, ask --
-  // and let the test say which one it got.
+  // The previous video spec skipped every playback case, stating the resource
+  // is "type tcevideo -- no HTML5 video element by design". The dump
+  // (cypress/scratch/out/video-dump.json) shows why that looked true and why
+  // it is not:
+  //
+  //   video_elements: 0      <- at TOP level, which is all it checked
+  //   iframe_count: 1
+  //   iframes[0].same_origin: true
+  //   iframes[0].inner_has_video: TRUE   <- the <video> is one level down
+  //
+  // The player renders into a same-origin iframe with no src (written into
+  // about:blank), so Cypress can reach straight into it. This is the third
+  // module where "the player is an opaque embedded widget" turned out to mean
+  // "nobody looked inside it" -- the quiz renderer and the code editor were
+  // the other two.
+  playerFrame() {
+    return cy.get("iframe", { timeout: 20000 }).first();
+  },
+
+  // The media element itself, reached through the frame's document. Retried
+  // via should() so it survives the frame still painting.
+  videoEl() {
+    return cy.get("body").then(($b) => {
+      const video = this.mediaElement($b);
+      expect(video, "a <video> element inside the player frame").to.exist;
+      return cy.wrap(video, { log: false });
+    });
+  },
+
+  // THREE separate states, and treating any of them as "ready" costs a run:
+  //
+  //   1. player chrome open  -- the frame may not exist yet
+  //   2. <video> in the frame -- but duration is NaN and play() does nothing
+  //   3. METADATA loaded      -- duration known, playback controllable
+  //
+  // Stopping at (1) made the flow skip its whole playback leg and pass anyway.
+  // Stopping at (2) made it assert "expected NaN to be above 0" and only pass
+  // on Cypress's third retry. This waits for (3).
+  //
+  // Polls, never asserts: a resource with no media element at all is a real
+  // answer that playerKind() reports rather than fails on.
+  mediaElement($body) {
+    const frames = $body.find("iframe").toArray();
+    for (const frame of frames) {
+      try {
+        const video = frame.contentDocument && frame.contentDocument.querySelector("video");
+        if (video) return video;
+      } catch (e) {
+        // Cross-origin frame -- not reachable, so not assertable.
+      }
+    }
+    return $body.find("video")[0] || null;
+  },
+
+  waitForMedia(maxAttempts = 20, attempt = 0) {
+    return cy.get("body").then(($b) => {
+      const video = this.mediaElement($b);
+      // readyState >= 1 is HAVE_METADATA: duration is a real number from here.
+      const ready = !!video && video.readyState >= 1 && Number.isFinite(video.duration) && video.duration > 0;
+      if (ready || attempt >= maxAttempts) return;
+      cy.wait(1000);
+      return this.waitForMedia(maxAttempts, attempt + 1);
+    });
+  },
+
+  // Whether this resource rendered something with a real media element, or
+  // only an embedded surface (the animation player). Asked rather than
+  // assumed, since both answer to the same card type.
   playerKind() {
     return cy.get("body").then(($b) => {
-      if ($b.find("video").length > 0) return "html5";
+      if (this.mediaElement($b)) return "html5";
       if ($b.find("iframe").length > 0) return "iframe";
       return "unknown";
     });
   },
 
-  // ---- HTML5 / video.js surface ------------------------------------------
-  //
-  // Used only once playerKind() reports "html5". Written against the standard
-  // media element rather than any app-specific wrapper, since the element's
-  // own API is what the workbook's cases are really about.
-  videoEl() {
-    return cy.get("video", { timeout: 20000 }).first();
-  },
-
   // The media element's own state is the ground truth for these cases -- far
   // more reliable than reading a rendered timestamp, and it does not depend on
   // any control being locatable.
+  // cy.wrap() on a DOM node yields a jQuery object, so reading .currentTime
+  // off the yielded subject gives undefined -- and a .then() that returns
+  // undefined passes the ORIGINAL subject through, which is why the first
+  // attempt asserted on "[object Object] to be a number". Everything below
+  // goes through this unwrapper.
+  withVideo(fn) {
+    return this.videoEl().then((v) => fn(v[0] || v));
+  },
+
   currentTime() {
-    return this.videoEl().then(($v) => $v[0].currentTime);
+    return this.withVideo((v) => v.currentTime);
   },
 
   duration() {
-    return this.videoEl().then(($v) => $v[0].duration);
+    return this.withVideo((v) => v.duration);
   },
 
   isPaused() {
-    return this.videoEl().then(($v) => $v[0].paused);
+    return this.withVideo((v) => v.paused);
   },
 
   isMuted() {
-    return this.videoEl().then(($v) => $v[0].muted);
+    return this.withVideo((v) => v.muted);
   },
 
   volume() {
-    return this.videoEl().then(($v) => $v[0].volume);
+    return this.withVideo((v) => v.volume);
+  },
+
+  // Playback is driven through the element's own API rather than a control
+  // skin: these cases are about playback behaviour, and headless autoplay
+  // policies make a programmatic play() the reliable trigger.
+  play() {
+    return this.withVideo((v) => {
+      const started = v.play();
+      // play() rejects if a policy blocks it; swallow so the assertion that
+      // follows reports the real state instead of an unhandled rejection.
+      if (started && started.catch) started.catch(() => {});
+      return null;
+    });
+  },
+
+  pause() {
+    return this.withVideo((v) => {
+      v.pause();
+      return null;
+    });
+  },
+
+  seekTo(seconds) {
+    return this.withVideo((v) => {
+      v.currentTime = seconds;
+      return null;
+    });
+  },
+
+  setVolume(level) {
+    return this.withVideo((v) => {
+      v.volume = level;
+      return null;
+    });
+  },
+
+  setMuted(muted) {
+    return this.withVideo((v) => {
+      v.muted = muted;
+      return null;
+    });
   },
 
   // video.js renders its own control bar; these are its standard classes.
