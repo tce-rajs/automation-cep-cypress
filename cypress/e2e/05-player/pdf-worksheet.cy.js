@@ -1,6 +1,27 @@
 // PDF / Worksheet Player -- Test_Cases/05_Player_new/PDF_Worksheet_Player_Test_Cases.xlsx
 // TC-PDF-001 to TC-PDF-022. This spec validates the PDF/Worksheet player only.
 //
+// PRECONDITIONS ARE PRECONDITIONS, NOT STEPS
+// ------------------------------------------
+// Every case in this workbook starts from "PDF/Worksheet resource available"
+// -- a STATE the test needs, not an instruction to go and re-create that state
+// from scratch. The previous version of this spec ran
+// PlaylistPage.goToKnownContentTopic() in beforeEach on every single test
+// regardless of where the app already was, which is the same mistake the quiz
+// spec had: the app reopens the last-used class after login, so the worksheet
+// is nearly always already on the strip in front of it, and re-navigating only
+// adds ~8s per test plus several more ways to fail for reasons that have
+// nothing to do with the PDF player.
+//
+// The decision now lives in WorksheetPlayerPage.ensureWorksheetAvailable():
+// check the current Playlist first, navigate ONLY if no worksheet is there.
+// TC-PDF-001 asserts that the direct path really did navigate nowhere.
+// Do not put an unconditional goToKnownContentTopic() back in beforeEach.
+//
+// How "is this card a worksheet?" is answered without inventing a selector:
+// via the app's own Filter Resources -> "Worksheet". That is a Playlist-level
+// filter, not curriculum navigation -- see WorksheetPlayerPage.js.
+//
 // CONFIRMED BLOCKER for most of this module: the PDF toolbar is rendered by
 // PDF.js and its controls carry no stable test hooks. Prev/Next have NO
 // attributes at all; orientation, print and the answer-key toggle carry only
@@ -14,45 +35,51 @@
 
 import { PlaylistPage } from "../../pages/PlaylistPage";
 import { PlayerPage } from "../../pages/PlayerPage";
+import { WorksheetPlayerPage as Worksheet } from "../../pages/WorksheetPlayerPage";
 
 describe("PDF Worksheet Player", () => {
   beforeEach(() => {
     cy.loginWithValidPin();
     cy.wait(1500);
-    PlaylistPage.goToKnownContentTopic();
-    PlaylistPage.filterToType("Worksheet");
+    // Establishes the precondition and NOTHING MORE: navigates only if this
+    // Playlist has no worksheet in it.
+    Worksheet.ensureWorksheetAvailable();
   });
 
   afterEach(() => {
     PlayerPage.closeIfOpen();
-    PlaylistPage.restoreAllFilter();
+    // The type filter persists on the account, so it must be put back or every
+    // later spec starts with a Playlist showing worksheets only.
+    Worksheet.restoreFilter();
   });
 
-  it("TC-PDF-001: PDF/Worksheet opens in the PDF Player", () => {
-    // The PDF viewer's own text is not reliably real DOM text, so the file
-    // fetch is used as the confirmation that the document actually loaded.
-    cy.intercept("GET", "**/fileservice/**").as("resourceFile");
-    PlayerPage.openFirstResourceCard();
-    cy.wait("@resourceFile", { timeout: 15000 });
-    cy.wait(1000);
-    PlayerPage.shouldBeOpen();
+  // The case is "the worksheet opens in the PDF Player", and its precondition
+  // is that the resource is already available -- so the location the app is
+  // sitting on is captured first and asserted unchanged, proving the open
+  // needed no curriculum navigation. Without that, this test passes just as
+  // happily when the suite wandered off to find a worksheet and came back.
+  it("TC-PDF-001: PDF/Worksheet opens in the PDF Player, from the Playlist already open", () => {
+    Worksheet.cards().should("have.length.greaterThan", 0);
+
+    PlaylistPage.currentLocation().then((before) => {
+      Worksheet.openDirectly();
+      PlayerPage.shouldBeOpen();
+
+      PlayerPage.close();
+      PlaylistPage.ensureDrawerVisible();
+      PlaylistPage.currentLocation().should("eq", before);
+    });
   });
 
   it("TC-PDF-009: closing PDF Player removes the wrapper", () => {
-    cy.intercept("GET", "**/fileservice/**").as("resourceFile");
-    PlayerPage.openFirstResourceCard();
-    cy.wait("@resourceFile", { timeout: 15000 });
-    cy.wait(1000);
+    Worksheet.open();
     PlayerPage.close();
     PlayerPage.shouldBeClosed();
   });
 
   it("TC-PDF-010: closing PDF restores prior Whiteboard pan/zoom", () => {
-    cy.intercept("GET", "**/fileservice/**").as("resourceFile");
     PlayerPage.whiteboardTransform().then((before) => {
-      PlayerPage.openFirstResourceCard();
-      cy.wait("@resourceFile", { timeout: 15000 });
-      cy.wait(1000);
+      Worksheet.open();
       PlayerPage.close();
       cy.wait(1500);
       PlayerPage.whiteboardTransform().should("eq", before);
@@ -62,20 +89,16 @@ describe("PDF Worksheet Player", () => {
   it("TC-PDF-012: a worksheet renders its document without a navigation error", () => {
     // What IS assertable without the toolbar: the document canvas renders and
     // the player stays open (no error state, no permanent spinner).
-    cy.intercept("GET", "**/fileservice/**").as("resourceFile");
-    PlayerPage.openFirstResourceCard();
-    cy.wait("@resourceFile", { timeout: 15000 });
-    cy.wait(2500);
+    Worksheet.open();
+    cy.wait(1500);
     PlayerPage.shouldBeOpen();
     // PDF.js paints pages onto <canvas> elements inside the player.
     cy.get("canvas").should("have.length.greaterThan", 0);
   });
 
   it("TC-PDF-022: worksheet load does not leave a permanent spinner", () => {
-    cy.intercept("GET", "**/fileservice/**").as("resourceFile");
-    PlayerPage.openFirstResourceCard();
-    cy.wait("@resourceFile", { timeout: 15000 });
-    cy.wait(4000);
+    Worksheet.open();
+    cy.wait(3000);
     // Once the fetch resolves the player must be in a settled state -- open,
     // with content, and no loading indicator still showing.
     PlayerPage.shouldBeOpen();

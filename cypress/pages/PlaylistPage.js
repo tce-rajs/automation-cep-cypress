@@ -56,6 +56,44 @@ export const PlaylistPage = {
     });
   },
 
+  // Every card type the resource strip can hold. Used to tell "the Playlist
+  // has not finished rendering yet" from "this Playlist really is empty".
+  ANY_CARD_SELECTOR:
+    '[data-qa-id="playlist-quiz-card"], [data-qa-id="playlist-resource-card"], [data-qa-id="playlist-asset-card"]',
+
+  // Cards stream in after the topic's resource list resolves, so a check that
+  // runs the instant the whiteboard paints reads an empty strip. Any test that
+  // decides something from card presence -- "is the resource I need already
+  // here, or must I navigate?" -- must settle first, or it takes the wrong
+  // branch for a reason that has nothing to do with the app.
+  //
+  // Polls, never asserts: an empty Playlist is a legitimate answer, not a
+  // failure, so this must not fail on its own. maxAttempts is a budget --
+  // callers that EXPECT an empty strip should pass a smaller one, since they
+  // burn the whole thing every time.
+  settle(maxAttempts = 12, attempt = 0) {
+    return cy.get("body").then(($body) => {
+      if ($body.find(this.ANY_CARD_SELECTOR).length > 0 || attempt >= maxAttempts) return;
+      cy.wait(1000);
+      return this.settle(maxAttempts, attempt + 1);
+    });
+  },
+
+  // Where the app currently is, read off the two Playlist header buttons.
+  // Lets a test PROVE that it navigated nowhere (capture before, assert
+  // unchanged after) instead of just commenting that it did not.
+  currentLocation() {
+    return cy
+      .get('[data-qa-id="playlist-current-grade-subject-btn"]')
+      .invoke("text")
+      .then((classText) =>
+        cy
+          .get('[data-qa-id="playlist-chapter-topic-btn"]')
+          .invoke("text")
+          .then((topicText) => `${classText.trim()} | ${topicText.trim()}`)
+      );
+  },
+
   openFilterMenu() {
     cy.get('[data-qa-id="playlist-resource-nav-filter-menu"]').click({ force: true });
     cy.wait(800);
