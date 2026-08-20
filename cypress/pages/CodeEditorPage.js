@@ -1,5 +1,5 @@
 // Page Object for the Code Editor player --
-// Test_Cases/code editor rework/Code_Editor_Test_Cases_Reworked.xlsx.
+// Test_Cases/05_Player/Code_Editor_Test_Cases.xlsx.
 //
 // SAME DISCIPLINE AS QuizPlayerPage / WorksheetPlayerPage
 // ------------------------------------------------------
@@ -388,8 +388,16 @@ export const CodeEditorPage = {
       const areas = Array.from($host[0].querySelectorAll("as-split-area"));
       // The output pane is the one that is not the editor.
       const pane = areas.find((el) => !el.querySelector(".monaco-editor")) || areas[areas.length - 1];
-      return pane ? (pane.textContent || "").replace(/\s+/g, " ").trim() : "";
+      return pane ? this.normalize(pane.textContent) : "";
     });
+  },
+
+  // Monaco paints indentation and gaps as NON-BREAKING spaces, so text read
+  // out of .view-lines does not compare equal to the same text elsewhere in
+  // the DOM even when it looks identical. Everything that compares editor text
+  // against output text has to go through this first.
+  normalize(text) {
+    return (text || "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
   },
 
   // What this particular resource should print, derived from ITS OWN source
@@ -398,8 +406,8 @@ export const CodeEditorPage = {
   // spec to one lesson's content.
   expectedPrintOutput() {
     return this.editorText().then((code) => {
-      const match = /print\(\s*["']([^"']{3,})["']/.exec(code || "");
-      return match ? match[1] : null;
+      const match = /print\(\s*["']([^"']{3,})["']/.exec(this.normalize(code));
+      return match ? this.normalize(match[1]) : null;
     });
   },
 

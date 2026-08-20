@@ -1,4 +1,4 @@
-// Library module automation, based on Test_Cases/MOD-007_Library_Test_Cases.xlsx
+// Library module automation, based on Test_Cases/03_Add_Resource/Library_Test_Cases.xlsx
 //
 // Note on scope: TC-LIB-007 to 012, 019 to 024, and 027 to 028 each test a
 // specific resource type's preview (PDF, image, video, TCE, Weblink, Code).

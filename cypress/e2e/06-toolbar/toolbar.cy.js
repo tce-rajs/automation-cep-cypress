@@ -1,6 +1,6 @@
-// Toolbar module automation, based on Test_Cases/05_Toolbar/Toolbar_Test_Cases.xlsx
+// Toolbar module automation, based on Test_Cases/06_Toolbar/Toolbar_Test_Cases.xlsx
 //
-// NOTE ON FOLDER NUMBERING: the Excel lives in Test_Cases/05_Toolbar/ but
+// NOTE ON FOLDER NUMBERING: the Excel lives in Test_Cases/06_Toolbar/ but
 // 05-player/ already exists here, so this spec is 06-toolbar/ to avoid two
 // different modules sharing a number. The Excel folder should probably be
 // renamed 06_Toolbar for consistency.

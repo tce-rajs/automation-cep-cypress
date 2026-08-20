@@ -1,4 +1,4 @@
-// Notes Player -- Test_Cases/05_Player_new/Notes_Player_Test_Cases.xlsx
+// Notes Player -- Test_Cases/05_Player/Notes_Player_Test_Cases.xlsx
 // TC-NOT-001 to TC-NOT-008. This spec validates the NOTES player only.
 //
 // ENTIRE MODULE PENDING -- blocked on test data, not on test code.

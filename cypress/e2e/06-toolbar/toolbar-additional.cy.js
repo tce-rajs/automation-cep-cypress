@@ -1,5 +1,5 @@
 // Toolbar module -- SECOND batch, based on
-// Test_Cases/05_Toolbar/Toolbar_Additional_Test_Cases.xlsx (TB-085 to TB-129).
+// Test_Cases/06_Toolbar/Toolbar_Additional_Test_Cases.xlsx (TB-085 to TB-129).
 //
 // toolbar.cy.js (TB-001 to TB-084) is deliberately untouched; this file is
 // purely additive. Where the two overlap conceptually, the first batch checks

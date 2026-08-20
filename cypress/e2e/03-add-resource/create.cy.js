@@ -1,4 +1,4 @@
-// Create module automation, based on Test_Cases/MOD-004_Create_Test_Cases.xlsx
+// Create module automation, based on Test_Cases/03_Add_Resource/Create_Test_Cases.xlsx
 // Note: this module heavily overlaps with the Create form covered in
 // add-resource.cy.js (TC-AR-005 to TC-AR-021/046/047), since both test
 // suites exercise the same Create Asset form reached via the + FAB.

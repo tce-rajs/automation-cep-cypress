@@ -1,8 +1,8 @@
-// Code Editor Player -- Test_Cases/code editor rework/Code_Editor_Test_Cases_Reworked.xlsx
+// Code Editor Player -- Test_Cases/05_Player/Code_Editor_Test_Cases.xlsx
 // TC-CODE-001 to TC-CODE-018.
 //
 // This REPLACES the spec written against the older
-// Test_Cases/05_Player_new/Code_Editor_Player_Test_Cases.xlsx (TC-CODE-001..013),
+// Test_Cases/_archive/05_Player_v1/Code_Editor_Player_Test_Cases.xlsx (TC-CODE-001..013),
 // whose IDs mean different things -- the old TC-CODE-006 was "closing removes
 // the wrapper", the new one is "verify expected output". Do not cross-reference
 // the two.
@@ -267,12 +267,25 @@ describe("Code Editor Player", () => {
     CodeEditor.open();
     CodeEditor.openSettings();
 
-    CodeEditor.settingCheckbox("Expand All").should("not.be.checked");
-    CodeEditor.toggleSetting("Expand All");
-    CodeEditor.settingCheckbox("Expand All").should("be.checked");
+    // Settings persist on the account, so the starting state is whatever the
+    // last run left behind -- asserting "not checked" first made this test
+    // pass once and fail forever after. Read the state, flip it, prove it
+    // flipped, then put it back.
+    CodeEditor.settingCheckbox("Expand All").then(($box) => {
+      const wasChecked = $box.is(":checked");
 
-    CodeEditor.closeSettings();
-    CodeEditor.editorText().should("match", /\S/);
+      CodeEditor.toggleSetting("Expand All");
+      CodeEditor.settingCheckbox("Expand All").should(wasChecked ? "not.be.checked" : "be.checked");
+
+      CodeEditor.closeSettings();
+      CodeEditor.editorText().should("match", /\S/);
+
+      // Restore, so this test leaves the account as it found it.
+      CodeEditor.openSettings();
+      CodeEditor.toggleSetting("Expand All");
+      CodeEditor.settingCheckbox("Expand All").should(wasChecked ? "be.checked" : "not.be.checked");
+      CodeEditor.closeSettings();
+    });
   });
 
   it("TC-CODE-012: the Minimap can be shown and hidden", () => {

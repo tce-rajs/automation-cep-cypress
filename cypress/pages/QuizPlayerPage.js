@@ -1,5 +1,5 @@
 // Page Object for the Quiz Player, written for the reworked test cases in
-// Test_Cases/quiz player rework/Quiz_Player_Test_Cases_Reworked.xlsx.
+// Test_Cases/05_Player/Quiz_Player_Test_Cases.xlsx.
 //
 // WHY THIS FILE EXISTS AT ALL
 // ---------------------------

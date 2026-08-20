@@ -1,4 +1,4 @@
-// AI-Assist module automation, based on Test_Cases/MOD-005_AI-Assist_Test_Cases.xlsx
+// AI-Assist module automation, based on Test_Cases/03_Add_Resource/AI_Assist_Test_Cases.xlsx
 //
 // AI-Assist generates its Video/Exercise suggestions asynchronously after the
 // panel opens. Exploration showed the content is fully populated well within

@@ -1,4 +1,4 @@
-// Gallery module automation, based on Test_Cases/MOD-006_Gallery_Test_Cases.xlsx
+// Gallery module automation, based on Test_Cases/03_Add_Resource/Gallery_Test_Cases.xlsx
 //
 // Gallery's core behavior (confirmed during MOD-003 exploration): clicking
 // an image attaches it directly to the Whiteboard canvas with no preview and

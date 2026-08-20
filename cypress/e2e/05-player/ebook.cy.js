@@ -1,4 +1,4 @@
-// Ebook Player -- Test_Cases/05_Player_new/Ebook_Player_Test_Cases.xlsx
+// Ebook Player -- Test_Cases/05_Player/Ebook_Player_Test_Cases.xlsx
 // TC-EBOOK-001 to TC-EBOOK-025. This spec validates the EBOOK player only.
 //
 // ENTIRE MODULE PENDING -- blocked on test data, not on test code.

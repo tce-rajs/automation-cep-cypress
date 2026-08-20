@@ -1,5 +1,5 @@
 // Video Player -- END-TO-END FLOW
-// Test_Cases/video player/Video_Player_Test_Cases.xlsx
+// Test_Cases/05_Player/Video_Player_Test_Cases.xlsx
 //
 // ONE test that walks the workbook's whole happy path in a single session:
 //

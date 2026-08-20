@@ -1,8 +1,8 @@
-// Quiz Player -- Test_Cases/quiz player rework/Quiz_Player_Test_Cases_Reworked.xlsx
+// Quiz Player -- Test_Cases/05_Player/Quiz_Player_Test_Cases.xlsx
 // TC-QUIZ-001 to TC-QUIZ-022.
 //
 // This REPLACES the spec written against the older
-// Test_Cases/05_Player_new/Quiz_Player_Test_Cases.xlsx (TC-QUIZ-001..028),
+// Test_Cases/_archive/05_Player_v2/Quiz_Player_Test_Cases.xlsx (TC-QUIZ-001..028),
 // whose IDs mean different things. Do not cross-reference the two.
 //
 // The old spec skipped 24 of its 28 cases on the grounds that the quiz UI is

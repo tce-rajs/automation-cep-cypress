@@ -1,6 +1,6 @@
 // Page Object for the PLAYLIST side of the PDF / Worksheet player --
 // everything needed to establish the workbook's preconditions
-// (Test_Cases/05_Player_new/PDF_Worksheet_Player_Test_Cases.xlsx, every case
+// (Test_Cases/05_Player/PDF_Worksheet_Player_Test_Cases.xlsx, every case
 // of which starts from "PDF/Worksheet resource available") WITHOUT doing more
 // than the precondition asks for.
 //

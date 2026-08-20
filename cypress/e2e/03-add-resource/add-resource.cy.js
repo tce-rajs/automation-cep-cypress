@@ -1,4 +1,4 @@
-// Add Resource module automation, based on Test_Cases/MOD-003_Add_Resource_Test_Cases.xlsx
+// Add Resource module automation, based on Test_Cases/03_Add_Resource/Add_Resource_Test_Cases.xlsx
 
 const SUPPORTED_FILE_TYPES = [
   { ext: "jpeg", mimeType: "image/jpeg" },

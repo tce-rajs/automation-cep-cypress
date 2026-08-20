@@ -1,5 +1,5 @@
 // Page Object for the Video player --
-// Test_Cases/video player/Video_Player_Test_Cases.xlsx (TC-VIDEO-001..017).
+// Test_Cases/05_Player/Video_Player_Test_Cases.xlsx (TC-VIDEO-001..017).
 //
 // SAME DISCIPLINE AS THE OTHER PLAYER PAGES
 // -----------------------------------------

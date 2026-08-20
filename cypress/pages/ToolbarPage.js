@@ -1,5 +1,5 @@
 // Page Object for the Whiteboard Toolbar (the vertical tool rail), based on
-// Test_Cases/05_Toolbar/Toolbar_Test_Cases.xlsx.
+// Test_Cases/06_Toolbar/Toolbar_Test_Cases.xlsx.
 //
 // Every selector below was confirmed by dumping the live DOM (see the project
 // rule in claude/README.md -- verify, don't guess). Confirmed facts:

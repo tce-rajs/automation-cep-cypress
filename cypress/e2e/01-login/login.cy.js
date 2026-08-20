@@ -1,4 +1,4 @@
-// Login module automation, based on Test_Cases/MOD-001_Login_Test_Cases.xlsx
+// Login module automation, based on Test_Cases/01_Login/Login_Test_Cases.xlsx
 
 import { LoginPage } from "../../pages/LoginPage";
 

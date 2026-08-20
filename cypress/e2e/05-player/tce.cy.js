@@ -1,4 +1,4 @@
-// TCE Player -- Test_Cases/05_Player_new/TCE_Player_Test_Cases.xlsx
+// TCE Player -- Test_Cases/05_Player/TCE_Player_Test_Cases.xlsx
 // TC-TCE-001 to TC-TCE-019. This spec validates the TCE player only.
 //
 // CONFIRMED INTEGRATION POINT (claude/APP_QUIRKS.md): the embedded TCE player

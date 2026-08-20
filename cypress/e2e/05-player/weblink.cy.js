@@ -1,4 +1,4 @@
-// Weblink Player -- Test_Cases/05_Player_new/Weblink_Player_Test_Cases.xlsx
+// Weblink Player -- Test_Cases/05_Player/Weblink_Player_Test_Cases.xlsx
 // TC-WEB-001 to TC-WEB-015. This spec validates the WEBLINK player only.
 //
 // ENTIRE MODULE PENDING -- blocked on test data, not on test code.

@@ -1,4 +1,4 @@
-// PDF / Worksheet Player -- Test_Cases/05_Player_new/PDF_Worksheet_Player_Test_Cases.xlsx
+// PDF / Worksheet Player -- Test_Cases/05_Player/PDF_Worksheet_Player_Test_Cases.xlsx
 // TC-PDF-001 to TC-PDF-022. This spec validates the PDF/Worksheet player only.
 //
 // PRECONDITIONS ARE PRECONDITIONS, NOT STEPS

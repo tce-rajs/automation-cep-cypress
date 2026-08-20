@@ -1,4 +1,4 @@
-// Video Player -- Test_Cases/05_Player_new/Video_Player_Test_Cases.xlsx
+// Video Player -- Test_Cases/_archive/05_Player_v2/Video_Player_Test_Cases.xlsx
 // TC-VID-001 to TC-VID-016. This spec validates the VIDEO player only.
 //
 // CONFIRMED APP BEHAVIOUR (carried over from the original combined spec, not

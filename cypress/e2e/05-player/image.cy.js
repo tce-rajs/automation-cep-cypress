@@ -1,4 +1,4 @@
-// Image Player -- Test_Cases/05_Player_new/Image_Player_Test_Cases.xlsx
+// Image Player -- Test_Cases/05_Player/Image_Player_Test_Cases.xlsx
 // TC-IMG-001 to TC-IMG-015. This spec validates the IMAGE player only.
 //
 // ENTIRE MODULE PENDING -- blocked on test data, not on test code.

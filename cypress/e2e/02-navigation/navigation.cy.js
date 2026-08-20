@@ -1,4 +1,4 @@
-// Navigation module automation, based on Test_Cases/MOD-002_Navigation_Test_Cases.xlsx
+// Navigation module automation, based on Test_Cases/02_Navigation/Navigation_Test_Cases.xlsx
 // All tests log in first (via cy.loginWithValidPin) since navigation only
 // makes sense for an authenticated user.
 

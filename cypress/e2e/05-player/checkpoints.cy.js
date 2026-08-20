@@ -1,4 +1,4 @@
-// Checkpoints Player -- Test_Cases/05_Player_new/Checkpoints_Player_Test_Cases.xlsx
+// Checkpoints Player -- Test_Cases/05_Player/Checkpoints_Player_Test_Cases.xlsx
 // TC-CHK-001 to TC-CHK-022. This spec validates the CHECKPOINTS player only.
 //
 // ENTIRE MODULE PENDING -- blocked on test data, not on test code.
