@@ -24,12 +24,11 @@
 //  2. Content coverage C02/C03/C04 (image question and/or image options,
 //     TC-QUIZ-006/007/008) has no matching content on this account. The only
 //     MCQ quiz is 5 text/text questions.
-//  3. TC-QUIZ-002's precondition (test data D03, "Playlist without Quiz") is
-//     not available in the configured target topic, which always contains two
-//     quizzes. The test now SEARCHES the other chapters of the same class for
-//     a quiz-free Playlist and runs branch B against it; if this account has
-//     none within the search budget it reports itself pending on test data
-//     rather than passing vacuously.
+//  3. TC-QUIZ-002 needs test data D03, "Playlist without Quiz", which the
+//     configured target topic cannot supply -- it always holds two quizzes.
+//     Class 7A | English Language (first chapter and topic) was supplied as
+//     that Playlist and is configured in cypress/config/quizFreeClass.js, so
+//     branch B now runs for real instead of skipping itself.
 //
 // PRECONDITIONS ARE PRECONDITIONS, NOT STEPS
 // ------------------------------------------
@@ -91,25 +90,24 @@ describe("Quiz Player", () => {
   // the other chapters of the same class. If the account has none, the case is
   // marked pending at runtime -- a missing D03 fixture is a test-data gap, and
   // reporting it as a pass would be a lie.
-  it("TC-QUIZ-002: navigates to the Quiz only when it is absent from the current Playlist", function () {
-    Quiz.findPlaylistWithoutQuiz().then(({ found, chapterIndex }) => {
-      if (!found) {
-        cy.log(
-          "PENDING (test data D03): no quiz-free Playlist found in the searched chapters of this class, so the 'quiz is absent' precondition cannot be created here."
-        );
-        this.skip();
-        return;
-      }
+  it("TC-QUIZ-002: navigates to the Quiz only when it is absent from the current Playlist", () => {
+    // Precondition (test data D03): a Playlist with NO Quiz. Class 7A |
+    // English Language, first chapter and topic -- see quizFreeClass.js.
+    Quiz.goToQuizFreeClass();
+    Quiz.cards().should(
+      "have.length",
+      0,
+      "the configured quiz-free class really has no Quiz, so navigating to one is a real step"
+    );
 
-      // Precondition established: this Playlist genuinely has no quiz.
-      cy.log(`Quiz-free Playlist found in chapter index ${chapterIndex}`);
-      Quiz.cards().should("have.length", 0);
+    PlaylistPage.currentLocation().then((beforeNavigation) => {
+      // F04: Grade -> Subject -> Chapter/Topic -> Playlist. Driven through the
+      // same decision the other tests use, so this asserts the decision itself
+      // took the navigation branch rather than just that navigation happened.
+      Quiz.ensureQuizAvailable(Quiz.MCQ_QUIZ).should("deep.eq", { navigated: true });
 
-      // F04: Grade -> Subject -> Chapter/Topic -> Playlist.
-      PlaylistPage.goToTargetClass();
-      Quiz.settlePlaylist();
-
-      // The quiz appears only after that navigation.
+      // The app really moved, and the quiz appears only after it did.
+      PlaylistPage.currentLocation().should("not.eq", beforeNavigation);
       Quiz.card(Quiz.MCQ_QUIZ).should("exist").scrollIntoView().should("be.visible");
 
       Quiz.openDirectly(Quiz.MCQ_QUIZ);

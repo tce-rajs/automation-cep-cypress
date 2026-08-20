@@ -36,6 +36,7 @@
 //   - That lock does not survive a new session, so tests stay repeatable.
 
 import { PlaylistPage } from "./PlaylistPage";
+import quizFreeClass from "../config/quizFreeClass";
 
 export const QuizPlayerPage = {
   // Content fixtures, kept here so a curriculum change is a one-place edit.
@@ -159,39 +160,22 @@ export const QuizPlayerPage = {
 
   // ---- Branch B support ---------------------------------------------------
   //
-  // TC-QUIZ-002 needs test data D03, "Playlist without Quiz", which the
-  // configured target topic cannot supply (it always holds two quizzes).
-  // Rather than skip the case outright, look for a quiz-free Playlist in the
-  // other chapters of the same class. Bounded, because each hop is a real
-  // navigation costing several seconds.
+  // TC-QUIZ-002 needs test data D03, "Playlist without Quiz". The configured
+  // target class cannot supply it -- its topic always holds two quizzes -- so
+  // the case used to search the other chapters and skip itself when it found
+  // none, which it did.
   //
-  // Yields { found, chapterIndex }. found === false means this account has no
-  // quiz-free Playlist within the search budget -- the case is then pending on
-  // test data, not failing.
-  findPlaylistWithoutQuiz(maxChapters = 4) {
-    PlaylistPage.openChaptersPopup();
-    return cy
-      .get('[data-qa-id="playlist-select-chapter"]')
-      .its("length")
-      .then((chapterCount) => {
-        // Close the popup we opened just to count.
-        cy.get('[data-qa-id="playlist-chapter-topic-btn"]').click({ force: true });
-        cy.wait(500);
-
-        const limit = Math.min(chapterCount, maxChapters);
-        // Chapter 0 is the configured target and is known to hold quizzes,
-        // so the search starts at 1.
-        const tryChapter = (index) => {
-          if (index >= limit) return cy.wrap({ found: false, chapterIndex: null }, { log: false });
-          PlaylistPage.goToChapterTopic(index, 0);
-          this.settlePlaylist(6);
-          return this.cardCount().then((quizCards) => {
-            if (quizCards === 0) return cy.wrap({ found: true, chapterIndex: index }, { log: false });
-            return tryChapter(index + 1);
-          });
-        };
-        return tryChapter(1);
-      });
+  // Class 7A | English Language (cypress/config/quizFreeClass.js) was supplied
+  // as that Playlist, so the precondition is now created directly instead of
+  // hunted for. That also makes the case deterministic: it either starts from
+  // a genuinely quiz-free Playlist or fails saying the data no longer holds.
+  goToQuizFreeClass() {
+    PlaylistPage.goToClass(quizFreeClass.grade, quizFreeClass.division, quizFreeClass.subject);
+    PlaylistPage.goToChapterTopic(quizFreeClass.chapterIndex, quizFreeClass.topicIndex);
+    PlaylistPage.ensureDrawerVisible();
+    // Wait for the strip to render before concluding anything about what is
+    // NOT on it -- otherwise "no quiz here" is just "not painted yet".
+    return this.settlePlaylist(8);
   },
 
   // ---- Player chrome ------------------------------------------------------
