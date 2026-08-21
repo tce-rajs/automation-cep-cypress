@@ -1,0 +1,444 @@
+<title>CEP Automation Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+  :root {
+    --ground:   #FAFAFC;
+    --surface:  #FFFFFF;
+    --sunken:   #F1F2F6;
+    --rule:     #E2E4EC;
+    --ink:      #0F1117;
+    --ink-mid:  #545A69;
+    --ink-dim:  #8A90A0;
+    --accent:   #3A4FC4;
+    --live:     #17795C;
+    --live-bg:  #DCEFE7;
+    --pend:     #9A6B12;
+    --pend-bg:  #F6E9CD;
+    --none:     #A03A2C;
+    --none-bg:  #F6DCD8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:  #0A0C11;
+      --surface: #13161E;
+      --sunken:  #1A1E28;
+      --rule:    #262B37;
+      --ink:     #E9EBF2;
+      --ink-mid: #A2A9BA;
+      --ink-dim: #757C8D;
+      --accent:  #97A6F5;
+      --live:    #58C79C;
+      --live-bg: #13332A;
+      --pend:    #DDB35F;
+      --pend-bg: #362B14;
+      --none:    #E58C7D;
+      --none-bg: #38201C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:  #0A0C11;
+    --surface: #13161E;
+    --sunken:  #1A1E28;
+    --rule:    #262B37;
+    --ink:     #E9EBF2;
+    --ink-mid: #A2A9BA;
+    --ink-dim: #757C8D;
+    --accent:  #97A6F5;
+    --live:    #58C79C;
+    --live-bg: #13332A;
+    --pend:    #DDB35F;
+    --pend-bg: #362B14;
+    --none:    #E58C7D;
+    --none-bg: #38201C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0 24px 88px;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+
+  h1, h2, h3, h4 {
+    font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .num  { font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    font-family: "Public Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  /* header */
+  header { padding: 64px 0 30px; }
+  header h1 { font-size: clamp(34px, 6vw, 54px); line-height: 1; margin-top: 12px; }
+  header p { margin: 14px 0 0; color: var(--ink-mid); max-width: 58ch; font-size: 17px; }
+
+  /* headline numbers */
+  .heads {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 34px;
+  }
+  .head {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 18px 20px;
+  }
+  .head b {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .head b i { font-style: normal; font-size: 17px; color: var(--ink-dim); }
+  .head span { font-size: 13.5px; color: var(--ink-mid); }
+  .c-live { color: var(--live); }
+  .c-pend { color: var(--pend); }
+  .c-none { color: var(--none); }
+  .c-acc  { color: var(--accent); }
+
+  section { margin-top: 64px; }
+  section > h2 { font-size: 27px; margin-top: 10px; }
+  .lede { margin: 10px 0 0; color: var(--ink-mid); max-width: 66ch; }
+
+  /* covered list */
+  .mods { margin-top: 24px; display: flex; flex-direction: column; gap: 2px; }
+  .mod {
+    display: grid;
+    grid-template-columns: 1fr 128px 74px;
+    gap: 16px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 11px 16px;
+  }
+  .mod .nm {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .mod .nm em {
+    font-style: normal;
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    letter-spacing: 0;
+    margin-top: 1px;
+  }
+  .bar { height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .bar .f { background: var(--live); }
+  .bar .p { background: var(--pend); }
+  .bar .z { background: var(--none); }
+  .cnt {
+    text-align: right;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-mid);
+    white-space: nowrap;
+  }
+  .cnt b { color: var(--live); font-weight: 700; }
+  .cnt.zero b { color: var(--none); }
+
+  .sub {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--ink-dim);
+    margin: 22px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sub::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+  /* pending reasons */
+  .why { margin-top: 22px; display: flex; flex-direction: column; gap: 2px; }
+  .r {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 16px;
+    align-items: baseline;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 13px 16px;
+  }
+  .r > b {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    text-align: right;
+  }
+  .r p { margin: 0; font-size: 14.5px; }
+  .r em { font-style: normal; display: block; color: var(--ink-dim); font-size: 13px; margin-top: 1px; }
+
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .p-you  { background: var(--pend-bg); color: var(--pend); }
+  .p-them { background: var(--none-bg); color: var(--none); }
+
+  /* waves */
+  .wave {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .wave-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--sunken);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wave-top h3 { font-size: 18px; }
+  .wave-top h3 span { color: var(--ink-dim); font-weight: 500; }
+  .wave-top .when { font-size: 13px; color: var(--ink-mid); }
+  .wave ul { list-style: none; margin: 0; padding: 6px 20px 16px; }
+  .wave li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14.5px;
+  }
+  .wave li:last-child { border-bottom: none; }
+  .wave li em { font-style: normal; color: var(--ink-dim); font-size: 13px; display: block; }
+  .wave li .sz {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .gate {
+    margin-top: 18px;
+    background: var(--pend-bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 20px;
+  }
+  .gate h4 { font-size: 15.5px; color: var(--pend); }
+  .gate p { margin: 6px 0 0; font-size: 14.5px; color: var(--ink); max-width: 74ch; }
+  .gate .mono { font-size: 13px; }
+
+  .method {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: 13.5px;
+    color: var(--ink-mid);
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+    padding: 5px 13px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .arw { color: var(--ink-dim); }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 12.5px;
+    color: var(--ink-dim);
+  }
+
+  @media (max-width: 640px) {
+    .mod { grid-template-columns: 1fr 66px; }
+    .mod .bar { display: none; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">Class Edge Platform &middot; Cypress suite &middot; 21 Aug 2026</span>
+    <h1>Automation Register</h1>
+    <p>Where coverage stands, what is holding the rest back, and the order to build the remaining modules in.</p>
+
+    <div class="heads">
+      <div class="head"><b class="c-live num">352</b><span>tests live across 23 specs</span></div>
+      <div class="head"><b class="c-pend num">188</b><span>written but pending</span></div>
+      <div class="head"><b class="c-none num">13</b><span>modules with no spec at all</span></div>
+      <div class="head"><b class="c-acc num">65<i>%</i></b><span>of written cases are running</span></div>
+    </div>
+  </header>
+
+  <section>
+    <span class="eyebrow">Section one</span>
+    <h2>What we have covered</h2>
+    <p class="lede">The teacher's core workflow is solid &mdash; sign in, pick a class, find a resource, add it, open it. Counts are <span class="mono">it()</span> blocks read from source.</p>
+
+    <div class="sub">Complete &mdash; no gaps</div>
+    <div class="mods">
+      <div class="mod"><div class="nm">Add Resource<em>add-resource.cy.js + create.cy.js</em></div><div class="bar"><i class="f" style="width:100%"></i></div><div class="cnt"><b>73</b>/73</div></div>
+      <div class="mod"><div class="nm">Grade / Subject / Division<em>navigation.cy.js</em></div><div class="bar"><i class="f" style="width:100%"></i></div><div class="cnt"><b>29</b>/29</div></div>
+      <div class="mod"><div class="nm">AI Assist<em>ai-assist.cy.js</em></div><div class="bar"><i class="f" style="width:100%"></i></div><div class="cnt"><b>23</b>/23</div></div>
+      <div class="mod"><div class="nm">Gallery<em>gallery.cy.js</em></div><div class="bar"><i class="f" style="width:100%"></i></div><div class="cnt"><b>21</b>/21</div></div>
+      <div class="mod"><div class="nm">Code Editor player<em>code-editor.cy.js</em></div><div class="bar"><i class="f" style="width:100%"></i></div><div class="cnt"><b>18</b>/18</div></div>
+    </div>
+
+    <div class="sub">Partial &mdash; running, with known holes</div>
+    <div class="mods">
+      <div class="mod"><div class="nm">Toolbar<em>toolbar.cy.js + toolbar-additional.cy.js</em></div><div class="bar"><i class="f" style="width:70%"></i><i class="p" style="width:30%"></i></div><div class="cnt"><b>50</b>/71</div></div>
+      <div class="mod"><div class="nm">Playlist<em>playlist.cy.js</em></div><div class="bar"><i class="f" style="width:76%"></i><i class="p" style="width:24%"></i></div><div class="cnt"><b>41</b>/54</div></div>
+      <div class="mod"><div class="nm">Authentication / Sign-In<em>login.cy.js</em></div><div class="bar"><i class="f" style="width:88%"></i><i class="p" style="width:12%"></i></div><div class="cnt"><b>37</b>/42</div></div>
+      <div class="mod"><div class="nm">TCE Search Library<em>library.cy.js</em></div><div class="bar"><i class="f" style="width:61%"></i><i class="p" style="width:39%"></i></div><div class="cnt"><b>20</b>/33</div></div>
+      <div class="mod"><div class="nm">Quiz player<em>quiz.cy.js</em></div><div class="bar"><i class="f" style="width:82%"></i><i class="p" style="width:18%"></i></div><div class="cnt"><b>18</b>/22</div></div>
+      <div class="mod"><div class="nm">Unsupported file player<em>unsupported.cy.js</em></div><div class="bar"><i class="f" style="width:54%"></i><i class="p" style="width:46%"></i></div><div class="cnt"><b>7</b>/13</div></div>
+      <div class="mod"><div class="nm">PDF / Worksheet player<em>pdf-worksheet.cy.js</em></div><div class="bar"><i class="f" style="width:23%"></i><i class="p" style="width:77%"></i></div><div class="cnt"><b>5</b>/22</div></div>
+      <div class="mod"><div class="nm">TCE player<em>tce.cy.js</em></div><div class="bar"><i class="f" style="width:31%"></i><i class="p" style="width:69%"></i></div><div class="cnt"><b>5</b>/16</div></div>
+      <div class="mod"><div class="nm">Video player<em>video.cy.js + video-flow.cy.js</em></div><div class="bar"><i class="f" style="width:24%"></i><i class="p" style="width:76%"></i></div><div class="cnt"><b>4</b>/17</div></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Section two</span>
+    <h2>What is pending</h2>
+    <p class="lede">
+      The 188 pendings are not a backlog of lazy work &mdash; 186 of them are deliberately empty placeholders with a documented reason. <strong>129 are waiting on someone else.</strong> Writing those bodies today produces tests that cannot pass.
+    </p>
+
+    <div class="why">
+      <div class="r"><b class="c-none">85</b><p><span class="pill p-them">needs QA data</span> No resource of that type exists in the curriculum<em>E-book 25 &middot; Checkpoints 22 &middot; Image 15 &middot; Weblink 15 &middot; Notes 8 &mdash; five whole specs, every body empty</em></p></div>
+      <div class="r"><b class="c-none">24</b><p><span class="pill p-them">needs dev</span> No stable selector in the app<em>PDF.js toolbar controls, Clear Whiteboard, More Symbols, answer key</em></p></div>
+      <div class="r"><b class="c-none">20</b><p><span class="pill p-them">needs product</span> Acceptance criteria were never defined<em>Toolbar cases citing "performance targets" and "the agreed large-content dataset" &mdash; neither exists</em></p></div>
+      <div class="r"><b class="c-pend">18</b><p><span class="pill p-you">ours</span> External micro-frontend, or a dead app feature<em>Includes <span class="mono">WhiteboardSaveService.save()</span>, which has no callers &mdash; decide: wire up or retire</em></p></div>
+      <div class="r"><b class="c-pend">17</b><p><span class="pill p-you">ours</span> Needs tooling this suite does not have<em>Canvas pixel inspection, download-to-disk verification, reliable CDK drag simulation</em></p></div>
+      <div class="r"><b class="c-none">13</b><p><span class="pill p-them">needs access</span> Credentials, elapsed time, or a second device<em>Session timeout (~15 min each), magnet-gated Learning Shorts, Drop It file transfer</em></p></div>
+      <div class="r"><b class="c-live">11</b><p><span class="pill p-you">not a gap</span> Covered elsewhere, or too destructive for shared QA<em>A documented routing decision, not missing work</em></p></div>
+    </div>
+
+    <div class="sub">Beyond the 188 &mdash; modules with nothing written yet</div>
+    <div class="mods">
+      <div class="mod"><div class="nm">AI Homework<em>15 components &middot; 33 qa-ids</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">User Profile<em>5 components &middot; 19 qa-ids &middot; holds Change Password + PIN</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">Compass<em>5 components &middot; 10 qa-ids</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">AI Notices<em>2 components &middot; 10 qa-ids</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">Learning Shorts<em>2 components &middot; 10 qa-ids &middot; magnet-gated</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">Minimap<em>1 component &middot; 5 qa-ids</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">Attendance<em>2 components &middot; 4 qa-ids &middot; needs student roster</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+      <div class="mod"><div class="nm">4 uncatalogued modules<em>add-custom-asset, adoption-report, fact-of-the-day, runner-logout</em></div><div class="bar"><i class="z" style="width:100%"></i></div><div class="cnt zero"><b>0</b></div></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Section three</span>
+    <h2>How to start the remaining modules</h2>
+    <p class="lede">Ordered by what is actually blocking each one, not by size. Wave&nbsp;2 and&nbsp;3 depend on other people &mdash; raise those requests <strong>today</strong> so they clear while Wave&nbsp;1 is being built.</p>
+
+    <div class="gate">
+      <h4>Before any of it &mdash; close the sync gap</h4>
+      <p><span class="mono">cep-testrun</span> is 7 files behind on the Quiz / Code Editor / Video rework, and is missing <span class="mono">cypress/config/quizClass.js</span> entirely &mdash; an import failure, not a soft mismatch. Run <span class="mono">.\sync-from-main.ps1</span>, confirm the list is exactly those 7, then <span class="mono">-Apply</span>. Clear the four stale <span class="mono">allure-results-*</span> folders, then <span class="mono">npm run test:report</span>.</p>
+    </div>
+
+    <div class="wave">
+      <div class="wave-top">
+        <h3>Wave 1 <span>&mdash; nothing is blocking these</span></h3>
+        <span class="when">Start immediately &middot; well instrumented, ready to write against</span>
+      </div>
+      <ul>
+        <li><div><strong>AI Homework</strong><em>Worksheet picker, topic selection, counters, question-builder swipe, assignment form</em></div><span class="sz">33 qa-ids</span></li>
+        <li><div><strong>User Profile</strong><em>Also closes Change Password, Change PIN and MFA &mdash; the untested security flows</em></div><span class="sz">19 qa-ids</span></li>
+        <li><div><strong>Compass</strong><em>AnalyseIt / ExploreIt widgets, revision tests, assignment list and details</em></div><span class="sz">10 qa-ids</span></li>
+        <li><div><strong>AI Notices</strong><em>Small and self-contained &mdash; good first module to close out completely</em></div><span class="sz">10 qa-ids</span></li>
+        <li><div><strong>Minimap</strong><em>Smallest module in the app. Realistically an afternoon, start to finish</em></div><span class="sz">5 qa-ids</span></li>
+        <li><div><strong>Library preview types</strong> &mdash; unblocks 13 existing tests<em>Only needs one exploratory session to find a reliable search term per type. Cheapest win here</em></div><span class="sz">+13 tests</span></li>
+      </ul>
+    </div>
+
+    <div class="wave">
+      <div class="wave-top">
+        <h3>Wave 2 <span>&mdash; one QA-data ticket unlocks all of it</span></h3>
+        <span class="when">Raise the ticket now &middot; build when content lands</span>
+      </div>
+      <ul>
+        <li><div><strong>Seed one resource per missing type</strong><em>E-book, Image, Notes, Weblink, Checkpoint into the Goyal Brothers curriculum &mdash; plus an enrolled student roster</em></div><span class="sz">+85 tests</span></li>
+        <li><div><strong>Then fill the five player specs</strong><em>Cases are already enumerated; selectors need confirming against the live DOM before bodies go in</em></div><span class="sz">5 specs</span></li>
+        <li><div><strong>Attendance</strong><em>Thinly instrumented &mdash; meaningful assertions need the same student roster</em></div><span class="sz">4 qa-ids</span></li>
+      </ul>
+    </div>
+
+    <div class="wave">
+      <div class="wave-top">
+        <h3>Wave 3 <span>&mdash; waiting on dev, product or access</span></h3>
+        <span class="when">Raise in parallel &middot; low effort, high unlock</span>
+      </div>
+      <ul>
+        <li><div><strong>One selector list to the developers</strong><em>Missing <span class="mono">data-qa-id</span> on PDF.js toolbar, Clear Whiteboard, More Symbols, answer key. Send once, not per-spec</em></div><span class="sz">+24 tests</span></li>
+        <li><div><strong>Toolbar acceptance criteria from the product owner</strong><em>Define the performance targets and large-content dataset those cases cite &mdash; or formally retire them</em></div><span class="sz">+20 tests</span></li>
+        <li><div><strong>Magnet-enabled PIN and class</strong><em>The only thing standing between here and Learning Shorts</em></div><span class="sz">10 qa-ids</span></li>
+        <li><div><strong>Decision on <span class="mono">WhiteboardSaveService.save()</span></strong><em>No callers in the app. Wire it up or retire the 4 cases &mdash; either answer closes them</em></div><span class="sz">+4 tests</span></li>
+      </ul>
+    </div>
+
+    <div class="method">
+      <span class="eyebrow" style="letter-spacing:.1em">Per module</span>
+      <span class="step">Flow spec, verified live</span><span class="arw">&rarr;</span>
+      <span class="step">Test cases written</span><span class="arw">&rarr;</span>
+      <span class="step">Confirmed with you</span><span class="arw">&rarr;</span>
+      <span class="step">Automate</span><span class="arw">&rarr;</span>
+      <span class="step">Sync to cep-testrun</span><span class="arw">&rarr;</span>
+      <span class="step">Allure run</span>
+    </div>
+  </section>
+
+  <footer>
+    Read from <span class="mono">automation-cep-cypress</span> @ <span class="mono">a3ff3e2</span> (working project) and <span class="mono">cep-testrun</span> (run-only clone), with module surface measured against <span class="mono">cep2-workspace</span>. Counts are static <span class="mono">it()</span> / <span class="mono">it.skip()</span> parses &mdash; a real pass rate can only come from the Allure run.
+    <strong style="color:var(--pend)">Note:</strong> <span class="mono">MODULE_COVERAGE.md</span> is stale &mdash; it reports Toolbar as untested when 50 tests are live, and Player as one spec when it is now eleven.
+  </footer>
+</div>
