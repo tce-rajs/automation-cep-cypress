@@ -126,3 +126,38 @@ here.
 - Resource file fetch (used to confirm a player opened): `GET **/fileservice/**`
 - Download trigger (Unsupported player): fires an interceptable
   `GET **/fileservice/**` before the actual browser save
+
+## Quiz Player (`QuizPlayerPage.js`)
+
+Confirmed by direct DOM exploration (see the note in APP_QUIRKS.md correcting
+the earlier "external widget, no selectors" conclusion). The renderer is
+SAME-ORIGIN Angular DOM -- **zero iframes** -- so every selector below is
+queryable from a test.
+
+- Component tree: `lib-quiz-renderer` > `lib-std-quiz` (multiple choice) or
+  `lib-open-ended-question`; navigation is `app-quiz-action-nav` +
+  `app-nav-pagination` / `pagination-template`
+- Quiz card: `[data-qa-id="playlist-quiz-card"]`, real click target is the
+  inner `.resource-card` (the wrapper is a no-op -- see APP_QUIRKS.md)
+- Also on the quiz card: `playlist-quiz-remove-btn`,
+  `playlist-quiz-cancle-btn` (the app's own typo), `playlist-quiz-close-icon-btn`
+- Question: `.qb-mcq.qb-tempalete` (the app's own typo -- do not "fix" it)
+- Options: `.quiz-options-group .option-content`, each containing
+  `span.option-label` ("A".."D") and `span.option-text`
+- **Selecting an option**: click `label.mdc-label` inside the option. The
+  native `input.mdc-checkbox__native-control` and `.option-content-wrapper`
+  also work; the `.option-content` div itself and `.mat-mdc-checkbox` do NOT.
+- Result markers: plain `correct` / `incorrect` classes land on
+  `.option-content` after submit or reveal
+- Action buttons (no data-qa-id, located by label): "Submit Answer" (disabled
+  until something is selected), "Show Answer", and "Next Question" which
+  REPLACES both of the others once the question is submitted or revealed
+- Question numbers: `button.mypage-link`; current question is
+  `li.page-item.number-item.current`
+- Prev/Next chevrons: `li.page-item.previous-item` / `li.page-item.next-item`,
+  disabled state is a `.pagination-disable` class, not a disabled attribute.
+  **The `li` is inert -- click the `button` inside it**, same trap as the
+  numbers.
+- Close: `button.closeIcon.btn`; split-screen: `button.closeIcon.btn.m-r4`
+- Options are Material CHECKBOXES but behave as SINGLE-ANSWER: selecting a
+  second option clears the first.

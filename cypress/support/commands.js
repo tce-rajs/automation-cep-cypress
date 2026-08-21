@@ -1,11 +1,23 @@
 // Reusable custom commands for the CEP whiteboard app login flow.
 // Keeping these small and named after what they do so specs stay readable.
 
-const VALID_PIN = "75583";
-const SCHOOL_NAME = "Velammal School";
-const SCHOOL_SEARCH_TERM = "velammal";
-const USERNAME = "support.admin";
-const PASSWORD = "Tce#12345";
+// Credentials come from cypress.env.json (gitignored) or CYPRESS_* environment
+// variables -- never from source. Copy cypress.env.example.json to
+// cypress.env.json to set them up locally.
+//
+// Read lazily inside a helper rather than at module load: Cypress.env() is
+// populated by the time a command runs, and this keeps a missing value from
+// silently becoming `undefined` typed into a field, which fails as a confusing
+// UI error instead of a clear "credential not configured".
+const cred = (key) => {
+  const value = Cypress.env(key);
+  if (!value) {
+    throw new Error(
+      `Missing credential "${key}". Copy cypress.env.example.json to cypress.env.json and fill it in, or set CYPRESS_${key}.`
+    );
+  }
+  return value;
+};
 
 Cypress.Commands.add("visitApp", () => {
   cy.visit("/teach/whiteboard");
@@ -30,7 +42,7 @@ Cypress.Commands.add("enterPin", (pin) => {
 // Full end-to-end login using the valid PIN, ending on the Dashboard.
 Cypress.Commands.add("loginWithValidPin", () => {
   cy.openSignInModal();
-  cy.enterPin(VALID_PIN);
+  cy.enterPin(cred("VALID_PIN"));
   cy.contains("Welcome Back!", { timeout: 20000 }).should("be.visible");
 });
 
@@ -58,9 +70,9 @@ Cypress.Commands.add("simulateSessionLoss", () => {
 Cypress.Commands.add("loginWithValidPassword", () => {
   cy.openSignInModal();
   cy.get('[data-qa-id="login-pin-password-link"]').click({ force: true });
-  cy.selectSchool(SCHOOL_SEARCH_TERM, SCHOOL_NAME);
-  cy.get('[data-qa-id="login-pwd-username-input"]').type(USERNAME, { force: true });
-  cy.get('[data-qa-id="login-pwd-password-input"]').type(PASSWORD, { force: true });
+  cy.selectSchool(cred("SCHOOL_SEARCH_TERM"), cred("SCHOOL_NAME"));
+  cy.get('[data-qa-id="login-pwd-username-input"]').type(cred("USERNAME"), { force: true });
+  cy.get('[data-qa-id="login-pwd-password-input"]').type(cred("PASSWORD"), { force: true, log: false });
   cy.get('[data-qa-id="login-pwd-submit-button"]').click({ force: true });
   cy.contains("Welcome Back!", { timeout: 20000 }).should("be.visible");
 });

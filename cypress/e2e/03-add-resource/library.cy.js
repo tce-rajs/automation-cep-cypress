@@ -1,4 +1,4 @@
-// Library module automation, based on Test_Cases/MOD-007_Library_Test_Cases.xlsx
+// Library module automation, based on Test_Cases/03_Add_Resource/Library_Test_Cases.xlsx
 //
 // Note on scope: TC-LIB-007 to 012, 019 to 024, and 027 to 028 each test a
 // specific resource type's preview (PDF, image, video, TCE, Weblink, Code).
@@ -125,27 +125,53 @@ describe("Library - Attachment", () => {
   });
 
   it("TC-LIB-016: attaches the resource to the playlist after Add to playlist is clicked", () => {
-    // Uses the 2nd result rather than the 1st: the 1st ("Database
-    // Transactions") is already attached from earlier exploration of this
-    // live QA environment, and the backend silently dedupes re-adding an
-    // already-attached resource, which would mask a real pass as a failure.
-    LibraryPage.playlistAssetCount().then((before) => {
-      LibraryPage.resultCardAt(1).click({ force: true });
-      cy.wait(2000);
-      cy.get('[data-qa-id="tce-library-pdf-add-playlist-btn"]').click({ force: true });
-      cy.wait(2500);
-      cy.get('[data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", before);
+    // This used to hardcode result index 1, with a comment explaining index 0
+    // was already attached from earlier exploration. The backend silently
+    // dedupes re-attaching something already attached, so the playlist count
+    // doesn't grow and the test fails even though attaching works fine. Index
+    // 1 has since been consumed the same way -- a fixed index inevitably rots
+    // on a shared QA account that nothing ever cleans up.
+    //
+    // So pick the resource dynamically: read the titles already on the
+    // playlist and attach the first search result that isn't among them. If
+    // every result is already attached, fail with a message that says so,
+    // rather than an opaque count assertion that looks like a product bug.
+    cy.get("body").then(($body) => {
+      const attached = Array.from($body.find('[data-qa-id="playlist-asset-card"]')).map((el) =>
+        el.innerText.trim().toLowerCase()
+      );
+      const before = $body.find('[data-qa-id="playlist-asset-card"]').length;
+
+      cy.get('[data-qa-id="tce-library-resource-card"]').then(($cards) => {
+        const index = $cards.toArray().findIndex((el) => {
+          const title = el.innerText.trim().toLowerCase();
+          return title && !attached.some((t) => t.includes(title) || title.includes(t));
+        });
+        expect(index, 'a "Database" search result not already on the playlist').to.be.greaterThan(-1);
+
+        LibraryPage.resultCardAt(index).click({ force: true });
+        cy.wait(2000);
+        cy.get('[data-qa-id="tce-library-pdf-add-playlist-btn"]').click({ force: true });
+        cy.wait(2500);
+        cy.get('[data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", before);
+      });
     });
   });
 
   it("TC-LIB-029: only shows the resource as attached once the attach operation completes", () => {
     LibraryPage.playlistAssetCount().then((before) => {
-      LibraryPage.resultCardAt(2).click({ force: true });
-      cy.wait(2000);
-      cy.get('[data-qa-id="playlist-asset-card"]').should("have.length", before);
-      cy.get('[data-qa-id="tce-library-pdf-add-playlist-btn"]').click({ force: true });
-      cy.wait(2500);
-      cy.get('[data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", before);
+      // Was hardcoded to index 2 and failed the same way TC-LIB-016 (index 1)
+      // and TC-AR-026 (index 3) did: the backend silently dedupes a resource
+      // that is already attached, so the count never grows. Pick an unattached
+      // result at runtime instead of consuming the next index in line.
+      LibraryPage.firstUnattachedResultIndex().then((index) => {
+        LibraryPage.resultCardAt(index).click({ force: true });
+        cy.wait(2000);
+        cy.get('[data-qa-id="playlist-asset-card"]').should("have.length", before);
+        cy.get('[data-qa-id="tce-library-pdf-add-playlist-btn"]').click({ force: true });
+        cy.wait(2500);
+        cy.get('[data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", before);
+      });
     });
   });
 

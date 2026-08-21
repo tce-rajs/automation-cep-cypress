@@ -58,6 +58,15 @@ way, the reason is almost always one of these.
   widget** (the quiz-renderer/Air Card component), not in this app's own
   `quiz-player.component.html`. It emits an `onSplitScreen` event this app
   handles, but the button itself has no selector in this codebase.
+  **CORRECTION (confirmed by direct DOM exploration):** "no selector in
+  this codebase" is about SOURCE OWNERSHIP and was wrongly read as "not
+  reachable from a test". The renderer is same-origin Angular DOM with ZERO
+  iframes, so Cypress can query every part of it -- question, options,
+  selection state, correct/incorrect markers and question navigation. The old
+  quiz.cy.js skipped 24 of 28 cases on the stronger reading; the reworked
+  spec implements them. Real selectors are in SELECTORS_REFERENCE.md under
+  "Quiz Player". The AIR Card, by contrast, genuinely never appears on this
+  curriculum, and camera-dependent cases remain untestable.
 - **TCE embedded player tools are reachable via `window.angularReference[id]`**
   (same-origin direct object access, not `postMessage`). Tool forwarding
   calls `tceplayerCanvasFn({ action: 'PEN' | 'PAN' | 'ERASER' | 'CLEAR' | 'NONE', ... })`

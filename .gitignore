@@ -4,3 +4,10 @@ cypress/videos/
 cypress/downloads/
 allure-results/
 allure-report/
+
+# Real credentials -- never commit. Copy cypress.env.example.json to
+# cypress.env.json and fill it in, or pass CYPRESS_* environment variables.
+cypress.env.json
+
+# Temporary exploration specs -- run explicitly via --spec, never part of a suite run.
+cypress/scratch/

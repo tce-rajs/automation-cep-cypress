@@ -1,4 +1,4 @@
-// Gallery module automation, based on Test_Cases/MOD-006_Gallery_Test_Cases.xlsx
+// Gallery module automation, based on Test_Cases/03_Add_Resource/Gallery_Test_Cases.xlsx
 //
 // Gallery's core behavior (confirmed during MOD-003 exploration): clicking
 // an image attaches it directly to the Whiteboard canvas with no preview and
@@ -200,16 +200,18 @@ describe("Gallery - Persistence", () => {
     });
   });
 
-  // Confirmed the mechanism is a POST to a "saveWhiteBoard" endpoint fired by
-  // WhiteboardService.wbDataSync(). The exact URL path isn't confirmed (only
-  // the endpoint's name), so this intercepts the next POST the app makes
-  // after the click and checks its URL mentions "whiteboard" rather than
-  // guessing an exact path.
+  // The mechanism is a POST fired by WhiteboardService.wbDataSync(). The path
+  // was previously unconfirmed, so this asserted the URL merely "mentions
+  // whiteboard" -- a guess, and a wrong one: the request always fired
+  // correctly but went to /tce-teach-api/1/api/1/serve/wb, which contains no
+  // "whiteboard" substring, so the test failed on a correct app behaviour.
+  // The real path is now confirmed from the observed request, so assert that
+  // instead of a guessed word.
   it("TC-GAL-012: Gallery insertion syncs to Whiteboard persistence via a save request", () => {
     cy.intercept("POST", "**").as("anyPost");
     GalleryPage.open();
     GalleryPage.firstImage().click({ force: true });
-    cy.wait("@anyPost", { timeout: 20000 }).its("request.url").should("match", /whiteboard/i);
+    cy.wait("@anyPost", { timeout: 20000 }).its("request.url").should("match", /\/serve\/wb\b/i);
   });
 });
 
