@@ -8,6 +8,11 @@ against the live app.
 
 Read these in order:
 
+0. **[PROJECT_OVERVIEW_AND_SESSION_LOG.md](PROJECT_OVERVIEW_AND_SESSION_LOG.md)**
+   — start here for the fastest catch-up: a self-contained project overview
+   plus a narrative log of what the most recent major session did and why.
+   The numbered files below are the detailed, living references it points
+   into; this one is the fast-orientation companion, not a replacement.
 1. **[PROJECT_NOTES.md](PROJECT_NOTES.md)** — architecture, how the
    POM/folder structure works, the target-class config system, and
    conventions used throughout the suite.
@@ -21,6 +26,10 @@ Read these in order:
    each app module has automated vs. pending, and why each pending item is
    blocked (missing curriculum content, missing selectors, external code,
    real elapsed time).
+5. **[../PENDING_TASKS.md](../PENDING_TASKS.md)** (project root) — check
+   this FIRST for anything currently open: unresolved investigations, work
+   left mid-stream, known issues awaiting a fix. More current than this
+   folder's other files for anything still in flux.
 
 > Two files this list used to point at are gone: `DEVELOPER_QUESTIONS.md`
 > was never committed, and `TEST_REPORT.md` was removed as redundant --

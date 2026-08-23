@@ -291,4 +291,37 @@ describe("Navigation - Switching classes end to end", () => {
     cy.wait(2000);
     cy.get('[data-qa-id="playlist-chapter-topic-btn"]').should("be.visible").and("not.be.empty");
   });
+
+  // TC-NAV-COMPLETE: a single continuous run through the whole module --
+  // class popup default tab, tab switching, Grade/Division/Subject
+  // selection, and Chapter/Topic navigation -- chained together the way a
+  // real teacher would actually use them in one sitting. TC-NAV-028/029
+  // already cover the two halves separately; this proves they work
+  // correctly back to back, including the Recent-Classes-is-default check
+  // neither of those two includes.
+  it("TC-NAV-COMPLETE: class popup default tab -> switch tabs -> Grade/Division/Subject -> Chapter/Topic, in one run", () => {
+    // --- Class popup opens on Recent Classes by default. ---
+    PlaylistPage.openClassPopup();
+    cy.contains(".mdc-tab--active, .mdc-tab-indicator--active", "Recent Classes").should("exist");
+
+    // --- Switch to All My Classes, pick Grade/Division/Subject. ---
+    PlaylistPage.openAllMyClassesTab();
+    cy.contains('[data-qa-id="common-select-grade-btn"]', GRADE_1).click({ force: true });
+    cy.wait(1000);
+    cy.contains('[data-qa-id="common-select-division-btn"]', DIVISION).click({ force: true });
+    cy.wait(1000);
+    cy.contains('[data-qa-id="common-select-subject-btn"]', SUBJECT_1).click({ force: true });
+    cy.wait(2000);
+    cy.get('[data-qa-id="playlist-current-grade-subject-btn"]').should("contain.text", SUBJECT_1);
+
+    // --- Navigate Chapter, then Topic, confirming the playlist follows. ---
+    PlaylistPage.openChaptersPopup();
+    cy.get('[data-qa-id="playlist-select-chapter"]:not(.active)').first().click({ force: true });
+    cy.wait(2000);
+    PlaylistPage.openChaptersPopup();
+    cy.get('[data-qa-id="playlist-select-topic"]').should("have.length.greaterThan", 0);
+    cy.get('[data-qa-id="playlist-select-topic"]:not(.active)').first().click({ force: true });
+    cy.wait(2000);
+    cy.get('[data-qa-id="playlist-chapter-topic-btn"]').should("be.visible").and("not.be.empty");
+  });
 });

@@ -14,7 +14,7 @@
 // curriculum navigation". So beforeEach establishes the state and nothing more,
 // via CodeEditorPage.ensureCodeEditorAvailable(), which navigates ONLY when no
 // Code resource is on the strip. TC-CODE-001 asserts the app did not move.
-// Do not put an unconditional goToHtmlChapterFirstTopic() back in beforeEach.
+// Do not put an unconditional goToComputerScienceCodeChapter() back in beforeEach.
 //
 // SELECTORS COME FROM TWO DOM DUMPS, NOT FROM GUESSWORK
 // -----------------------------------------------------

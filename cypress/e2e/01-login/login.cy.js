@@ -341,3 +341,47 @@ describe("Login - Dashboard and session", () => {
     cy.contains("You are currently in Guest Mode.").should("not.exist");
   });
 });
+
+// TC-LOGIN-043: a single continuous run through the module's PIN-based
+// surface -- error path, valid login, session persistence, and sign-out --
+// in one session rather than each as an isolated it(). The individual
+// pieces are already covered above (TC-LOGIN-009 for the error, TC-LOGIN-035
+// for persistence); this proves they still work correctly chained together
+// in the order a real user would actually hit them, not just in isolation.
+//
+// PASSWORD LOGIN DELIBERATELY EXCLUDED, per user instruction 2026-08-23:
+// CONFIRMED live that Password login is currently rejected by the server
+// for this account -- HTTP 400 "Login credentials are invalid" on
+// /sso/token -- even via TC-LOGIN-025, the pre-existing, completely
+// unmodified STANDALONE password-login test (no PIN involved at all). This
+// is a real, current account/credential issue, not a bug in this file or in
+// TC-LOGIN-043's design. See MODULE_COVERAGE.md for the standing note; if
+// the password is fixed later, TC-LOGIN-037 (already in this file) still
+// covers "both methods work", so nothing needs to be re-added here.
+describe("Login - Complete flow (PIN error path, valid login, persistence, sign-out in one run)", () => {
+  it("TC-LOGIN-043: guest -> invalid PIN -> valid PIN -> refresh persists -> sign out", () => {
+    // --- Guest Mode, open the modal. ---
+    cy.visitApp();
+    cy.contains("You are currently in Guest Mode.", { timeout: 15000 }).should("be.visible");
+    LoginPage.signInTitle().click({ force: true });
+    LoginPage.pinDigitInput(0).should("be.visible");
+
+    // --- PIN: wrong first, then correct. ---
+    cy.enterPin(INVALID_PIN);
+    cy.contains(/incorrect|invalid/i, { timeout: 15000 }).should("be.visible");
+    for (let i = 0; i < 5; i += 1) {
+      LoginPage.pinDigitInput(i).clear({ force: true });
+    }
+    cy.enterPin(VALID_PIN);
+    cy.contains("Welcome Back!", { timeout: 20000 }).should("be.visible");
+    cy.contains("You are currently in Guest Mode.").should("not.exist");
+
+    // --- Session persists across a refresh. ---
+    cy.reload();
+    cy.contains("You are currently in Guest Mode.", { timeout: 15000 }).should("not.exist");
+
+    // --- Sign out, back to Guest Mode -- clean end state for whatever runs next. ---
+    LoginPage.signOut();
+    cy.contains("You are currently in Guest Mode.", { timeout: 15000 }).should("be.visible");
+  });
+});

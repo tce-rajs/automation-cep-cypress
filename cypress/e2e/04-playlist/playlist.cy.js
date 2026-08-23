@@ -572,3 +572,87 @@ describe("Playlist - Add Custom Asset", () => {
     });
   });
 });
+
+// TC-PL-COMPLETE: a single continuous run through the module's core surface
+// -- Show/Hide, Pin, Chapter/Topic navigation, Filter, and Open/Close a
+// resource -- chained together the way a real teacher would actually use
+// them in one sitting, not just each in isolation. Deliberately excludes
+// Remove Resource and the failure-path Add Custom Asset case, since those
+// either destroy shared curriculum data or are already negative-path only.
+describe("Playlist - Complete flow (Show/Hide/Pin, navigation, filter, open/close in one run)", () => {
+  beforeEach(() => {
+    cy.loginWithValidPin();
+    cy.wait(1500);
+  });
+
+  it("TC-PL-COMPLETE: drawer toggle -> pin -> chapter/topic nav -> filter -> open a resource -> close -> unpin", () => {
+    // --- Show/Hide the drawer. ---
+    cy.get('[data-qa-id="playlist-drawer-btn"]').should("contain.text", "HIDE");
+    cy.get('[data-qa-id="playlist-drawer-btn"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-qa-id="playlist-drawer-btn"]').should("contain.text", "SHOW");
+    cy.get('[data-qa-id="playlist-drawer-btn"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-qa-id="playlist-drawer-btn"]').should("contain.text", "HIDE");
+
+    // --- Pin it so selecting a resource won't auto-hide it later. ---
+    cy.get('[data-qa-id="playlist-resource-nav-pin"]').click({ force: true });
+    cy.wait(500);
+
+    // --- Go to a known-content topic (this IS chapter/topic navigation --
+    // goToTargetClass() drives Grade/Division/Subject/Chapter/Topic
+    // selection) so filtering/opening has real, predictable cards. ---
+    PlaylistPage.goToKnownContentTopic();
+    cy.wait(1000);
+
+    // --- Previous/Next chevrons move off, then back onto the known topic. ---
+    cy.get(".current-chapter-topic").invoke("text").then((knownTopic) => {
+      cy.get('[data-qa-id="playlist-nav-topic-right"]').click({ force: true });
+      cy.wait(2000);
+      cy.get(".current-chapter-topic").invoke("text").should("not.eq", knownTopic);
+
+      cy.get('[data-qa-id="playlist-nav-topic-left"]').click({ force: true });
+      cy.wait(2000);
+      cy.get(".current-chapter-topic").invoke("text").should("eq", knownTopic);
+    });
+
+    // --- Filter to Worksheets, confirm the list updates, then clear it. ---
+    cy.get('[data-qa-id="playlist-resource-card"], [data-qa-id="playlist-asset-card"], [data-qa-id="playlist-quiz-card"]').its("length").then((fullCount) => {
+      PlaylistPage.openFilterMenu();
+      PlaylistPage.toggleAllFilterRow().click({ force: true });
+      cy.wait(300);
+      cy.contains('[data-qa-id="playlist-filter-menu-select"]', "Worksheets").click({ force: true });
+      cy.wait(500);
+      // Broader selector deliberately, not just playlist-resource-card:
+      // CONFIRMED live 2026-08-23 this account's Worksheets in this topic
+      // are currently all playlist-asset-card (accumulated test-created
+      // assets), not curriculum playlist-resource-card -- TC-OR-001's
+      // narrower assumption no longer holds after a session's worth of
+      // test data accumulation. Matches TC-FR-002/003's own combined
+      // selector elsewhere in this file.
+      cy.get('[data-qa-id="playlist-resource-card"], [data-qa-id="playlist-asset-card"]').should("have.length.greaterThan", 0);
+
+      // --- Open the first filtered card. ---
+      cy.get('[data-qa-id="playlist-resource-card"], [data-qa-id="playlist-asset-card"]').first().click({ force: true });
+      cy.wait(2500);
+      // Pinned drawer -- opening a resource must NOT have auto-hidden it.
+      cy.get('[data-qa-id="playlist-drawer-btn"]').should("contain.text", "HIDE");
+
+      // --- Clear the filter: uncheck Worksheets specifically (toggle-all's
+      // semantics from an already-partial state aren't the clean full-reset
+      // TC-FR-003 assumes from a fresh/all-checked state -- confirmed live
+      // 2026-08-23, toggling it twice here left Worksheets still the only
+      // checked type instead of restoring all). Then Toggle All ONCE more
+      // to guarantee every type is back on. ---
+      PlaylistPage.openFilterMenu();
+      cy.contains('[data-qa-id="playlist-filter-menu-select"]', "Worksheets").click({ force: true });
+      cy.wait(300);
+      PlaylistPage.toggleAllFilterRow().click({ force: true });
+      cy.wait(500);
+      cy.get('[data-qa-id="playlist-resource-card"], [data-qa-id="playlist-asset-card"], [data-qa-id="playlist-quiz-card"]').should("have.length", fullCount);
+    });
+
+    // --- Unpin, restoring default state for whatever runs next. ---
+    cy.get('[data-qa-id="playlist-resource-nav-pin"]').click({ force: true });
+  });
+});

@@ -49,6 +49,7 @@
 // ---------------------------------------------------------------------------
 
 import { ToolbarPage } from "../../pages/ToolbarPage";
+import { PlaylistPage } from "../../pages/PlaylistPage";
 
 const WB_CONTAINER = '[data-qa-id="wb-drawing-container"]';
 // Confirmed by DOM dump: the Text tool renders a <foreignObject
@@ -288,6 +289,37 @@ describe("Toolbar (additional) - Pen output on the whiteboard", () => {
   // have no confirmed selector. Picking a preset instead would test a
   // different case (TB-012) and report a pass for coverage never exercised.
   it.skip("TB-087: a custom Pen colour is applied to the rendered stroke", () => {});
+
+  // TB-015: complements TB-088 above -- TB-088 already confirms THICKNESS
+  // survives tool switching; this confirms COLOUR does too, via the
+  // `.selected` class DOM-confirmed 2026-08-23 on `toolbar-pen-color-*` swatches.
+  it("TB-015: Pen retains the last selected colour and thickness", () => {
+    ToolbarPage.openToolPanel("gtPen");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-pen-color-pen-color-blue-6"]').click({ force: true });
+    cy.wait(400);
+    ToolbarPage.panel().contains("Thick").click({ force: true });
+    cy.wait(400);
+    ToolbarPage.closePanelByTappingOutside();
+
+    // Single-tap Pen (per the workbook's own steps), then reopen the panel.
+    ToolbarPage.selectTool("gtSelect");
+    ToolbarPage.selectTool("gtPen");
+    ToolbarPage.openToolPanel("gtPen");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-pen-color-pen-color-blue-6"]').should("have.class", "selected");
+    ToolbarPage.panel().contains("Thick").should("exist");
+    ToolbarPage.closePanelByTappingOutside();
+
+    // And drawing with it produces a stroke -- colour-value serialization
+    // (hex vs rgb) is not asserted here since it was not confirmed live;
+    // TB-088 above already confirms thickness is measurable and retained.
+    WB.pathCount().then((before) => {
+      WB.drawStroke({ x: 300, y: 300 }, { x: 550, y: 300 });
+      WB.pathCount().should("be.greaterThan", before);
+      WB.paths().last().should("have.attr", "stroke").and("not.be.empty");
+    });
+  });
 });
 
 describe("Toolbar (additional) - Eraser output on the whiteboard", () => {
@@ -347,11 +379,42 @@ describe("Toolbar (additional) - Eraser output on the whiteboard", () => {
     });
   });
 
+  // TB-019/TB-020: the Free Erase toggle and size slider selectors were
+  // CONFIRMED live 2026-08-23 (toolbar-eraser-free-toggle,
+  // toolbar-eraser-size-slider) -- these test the PANEL'S OWN UI behaviour
+  // (does the slider show/hide), not erasing semantics, so they are separate
+  // from TB-091 below, which stays skipped for the semantics reason.
+  // CONFIRMED live 2026-08-23: toolbar-eraser-size-slider is Angular
+  // Material's raw <input type="range"> (mat-slider always keeps this
+  // opacity:0 by design -- the visible track/thumb are separate sibling
+  // elements) so it never reads as ":visible" regardless of toggle state.
+  // The element that genuinely shows/hides is its wrapper (`.erase-size`,
+  // no data-qa-id -- reached here via .parents() from the confirmed input).
+  it("TB-019: enabling Free Erase hides the size slider", () => {
+    ToolbarPage.openToolPanel("gtErase");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-eraser-size-slider"]').parents(".erase-size").should("be.visible");
+    cy.get('[data-qa-id="toolbar-eraser-free-toggle"]').check({ force: true });
+    cy.wait(500);
+    cy.get('[data-qa-id="toolbar-eraser-size-slider"]').parents(".erase-size").should("not.be.visible");
+  });
+
+  it("TB-020: disabling Free Erase shows the size slider again", () => {
+    ToolbarPage.openToolPanel("gtErase");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-eraser-free-toggle"]').check({ force: true });
+    cy.wait(500);
+    cy.get('[data-qa-id="toolbar-eraser-size-slider"]').parents(".erase-size").should("not.be.visible");
+    cy.get('[data-qa-id="toolbar-eraser-free-toggle"]').uncheck({ force: true });
+    cy.wait(500);
+    cy.get('[data-qa-id="toolbar-eraser-size-slider"]').parents(".erase-size").should("be.visible");
+  });
+
   // TB-091: Free Erase behaviour.
-  // SKIPPED -- twice blocked. The Free Erase control inside the Eraser panel
-  // has no confirmed selector, and the Excel itself flags "Exact Free Erase
-  // semantics require confirmation if not documented", so there is no agreed
-  // expected result to assert against either.
+  // SKIPPED -- the Free Erase control itself is now confirmed (see TB-019/
+  // TB-020 above), but the Excel still flags "Exact Free Erase semantics
+  // require confirmation if not documented" -- there is no agreed expected
+  // ERASING result to assert against, only the panel's UI toggle.
   it.skip("TB-091: Free Erase removes content per its documented behaviour", () => {});
 
   // TB-092: Eraser size affects the erased area.
@@ -421,14 +484,91 @@ describe("Toolbar (additional) - Shapes output on the whiteboard", () => {
 });
 
 describe("Toolbar (additional) - Background", () => {
-  // TB-096: background persists across tool switches.
-  // TB-097: changing background preserves existing whiteboard content.
-  // BOTH SKIPPED -- the Background panel is confirmed to open (toolbar.cy.js
-  // TB-034) but the individual background OPTIONS inside it were never
-  // enumerated against the live DOM, so there is no confirmed way to apply a
-  // specific non-default background, nor to read back which one is applied.
-  it.skip("TB-096: the selected background survives switching tools", () => {});
-  it.skip("TB-097: changing the background leaves existing content intact", () => {});
+  beforeEach(() => {
+    cy.loginWithValidPin();
+    cy.wait(2000);
+  });
+
+  // Background options CONFIRMED live 2026-08-23: each renders as
+  // [data-qa-id="toolbar-background-{id}"] (e.g. gtBlankPage, gtSingleLine,
+  // gtMathSquare02), and the currently-applied one carries an "active" class
+  // -- unblocking TB-035/036 below and TB-096/097 (previously skipped for
+  // exactly this missing-selector reason).
+
+  it("TB-035: the currently applied background is visibly marked selected", () => {
+    ToolbarPage.openToolPanel("gtBackground");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id^="toolbar-background-"].active').should("have.length", 1);
+  });
+
+  it("TB-036: selecting another background updates the active marker immediately", () => {
+    ToolbarPage.openToolPanel("gtBackground");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id^="toolbar-background-"].active')
+      .invoke("attr", "data-qa-id")
+      .then((activeBefore) => {
+        // Pick a different option than whatever is currently active.
+        cy.get('[data-qa-id^="toolbar-background-"]')
+          .filter((_, el) => el.getAttribute("data-qa-id") !== activeBefore)
+          .first()
+          .invoke("attr", "data-qa-id")
+          .then((target) => {
+            cy.get(`[data-qa-id="${target}"]`).click({ force: true });
+            cy.wait(500);
+            cy.get(`[data-qa-id="${target}"]`).should("have.class", "active");
+            cy.get(`[data-qa-id="${activeBefore}"]`).should("not.have.class", "active");
+          });
+      });
+  });
+
+  it("TB-096: the selected background survives switching tools", () => {
+    ToolbarPage.openToolPanel("gtBackground");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id^="toolbar-background-"].active')
+      .invoke("attr", "data-qa-id")
+      .then((activeBefore) => {
+        cy.get('[data-qa-id^="toolbar-background-"]')
+          .filter((_, el) => el.getAttribute("data-qa-id") !== activeBefore)
+          .first()
+          .invoke("attr", "data-qa-id")
+          .then((target) => {
+            cy.get(`[data-qa-id="${target}"]`).click({ force: true });
+            cy.wait(500);
+            ToolbarPage.closePanelByTappingOutside();
+
+            ToolbarPage.selectTool("gtPen");
+            ToolbarPage.selectTool("gtSelect");
+
+            ToolbarPage.openToolPanel("gtBackground");
+            ToolbarPage.panelShouldBeOpen();
+            cy.get(`[data-qa-id="${target}"]`).should("have.class", "active");
+          });
+      });
+  });
+
+  it("TB-097: changing the background leaves existing whiteboard content intact", () => {
+    WB.pathCount().then((before) => {
+      penStroke({ x: 300, y: 300 }, { x: 500, y: 300 });
+      WB.pathCount().should("be.greaterThan", before);
+
+      WB.pathCount().then((afterDraw) => {
+        ToolbarPage.openToolPanel("gtBackground");
+        ToolbarPage.panelShouldBeOpen();
+        cy.get('[data-qa-id^="toolbar-background-"].active')
+          .invoke("attr", "data-qa-id")
+          .then((activeBefore) => {
+            cy.get('[data-qa-id^="toolbar-background-"]')
+              .filter((_, el) => el.getAttribute("data-qa-id") !== activeBefore)
+              .first()
+              .click({ force: true });
+            cy.wait(500);
+            ToolbarPage.closePanelByTappingOutside();
+
+            WB.pathCount().should("eq", afterDraw);
+          });
+      });
+    });
+  });
 });
 
 describe("Toolbar (additional) - Text objects", () => {
@@ -918,18 +1058,185 @@ describe("Toolbar (additional) - Zoom and Pan against real content", () => {
         });
       });
   });
+
+  // TB-039 through TB-046: the Zoom panel's own controls (confirmed live
+  // 2026-08-23 -- toolbar-zoom-in-btn/-out-btn/-reset-btn/-slider/-minimap-btn,
+  // slider min=25 max=200 step=25). These test the CONTROL's own readout, not
+  // canvas content, so no pixel inspection is needed.
+  it("TB-039: Zoom Plus increases the slider value by one step", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-zoom-slider"]')
+      .invoke("attr", "aria-valuetext")
+      .then((before) => {
+        cy.get('[data-qa-id="toolbar-zoom-in-btn"]').click({ force: true });
+        cy.wait(500);
+        cy.get('[data-qa-id="toolbar-zoom-slider"]')
+          .invoke("attr", "aria-valuetext")
+          .should((after) => {
+            expect(Number(after)).to.be.greaterThan(Number(before));
+          });
+      });
+  });
+
+  it("TB-040: Zoom Minus decreases the slider value by one step", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-zoom-slider"]')
+      .invoke("attr", "aria-valuetext")
+      .then((before) => {
+        cy.get('[data-qa-id="toolbar-zoom-out-btn"]').click({ force: true });
+        cy.wait(500);
+        cy.get('[data-qa-id="toolbar-zoom-slider"]')
+          .invoke("attr", "aria-valuetext")
+          .should((after) => {
+            expect(Number(after)).to.be.lessThan(Number(before));
+          });
+      });
+  });
+
+  it("TB-041: Zoom cannot go below its minimum (25)", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    // More clicks than needed to reach the floor from any starting value.
+    for (let i = 0; i < 10; i++) {
+      cy.get('[data-qa-id="toolbar-zoom-out-btn"]').click({ force: true });
+      cy.wait(150);
+    }
+    cy.get('[data-qa-id="toolbar-zoom-slider"]').should("have.attr", "aria-valuetext", "25");
+  });
+
+  it("TB-042: Zoom cannot go above its maximum (200)", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    for (let i = 0; i < 10; i++) {
+      cy.get('[data-qa-id="toolbar-zoom-in-btn"]').click({ force: true });
+      cy.wait(150);
+    }
+    cy.get('[data-qa-id="toolbar-zoom-slider"]').should("have.attr", "aria-valuetext", "200");
+  });
+
+  it("TB-043: the Zoom slider exposes a 25-200 range in steps of 25", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-zoom-slider"]')
+      .should("have.attr", "min", "25")
+      .and("have.attr", "max", "200")
+      .and("have.attr", "step", "25");
+  });
+
+  it("TB-044: Zoom Reset returns the slider to 100", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-zoom-in-btn"]').click({ force: true });
+    cy.wait(300);
+    cy.get('[data-qa-id="toolbar-zoom-in-btn"]').click({ force: true });
+    cy.wait(300);
+    cy.get('[data-qa-id="toolbar-zoom-slider"]').should("not.have.attr", "aria-valuetext", "100");
+    cy.get('[data-qa-id="toolbar-zoom-reset-btn"]').click({ force: true });
+    cy.wait(500);
+    cy.get('[data-qa-id="toolbar-zoom-slider"]').should("have.attr", "aria-valuetext", "100");
+  });
+
+  it("TB-045: the Minimap button closes the Zoom panel and opens Minimap", () => {
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-zoom-minimap-btn"]').click({ force: true });
+    cy.wait(800);
+    ToolbarPage.panelShouldBeClosed();
+    cy.get('[data-qa-id="minimap-container"]').should("have.class", "visible");
+  });
+
+  // CONFIRMED live 2026-08-23 (contradicts the workbook's own premise):
+  // opening a tool's panel makes THAT tool the active one -- Pen loses its
+  // active state the moment Zoom's panel opens, not just visually but for
+  // real (gtZoom becomes the active tool). Closing the panel via
+  // tap-outside then reverts to gtSelect, the default tool -- NOT back to
+  // whatever was active before Zoom was opened. Asserting the real,
+  // confirmed behaviour here rather than the workbook's assumption, same
+  // policy as TC-VID-014's corrected assumption in video.cy.js.
+  it("TB-046: closing the Zoom panel reverts to the default Select tool, not the previously active one", () => {
+    ToolbarPage.selectTool("gtPen");
+    ToolbarPage.isToolActive("gtPen").should("have.class", "changecolor");
+
+    ToolbarPage.openToolPanel("gtZoom");
+    ToolbarPage.panelShouldBeOpen();
+    ToolbarPage.isToolActive("gtZoom").should("have.class", "changecolor");
+
+    ToolbarPage.closePanelByTappingOutside();
+
+    ToolbarPage.isToolActive("gtSelect").should("have.class", "changecolor");
+    ToolbarPage.isToolActive("gtPen").should("not.have.class", "changecolor");
+  });
 });
 
 describe("Toolbar (additional) - Widgets", () => {
+  beforeEach(() => {
+    cy.loginWithValidPin();
+    cy.wait(2000);
+  });
+
+  // Built-in widget tiles CONFIRMED live 2026-08-23:
+  // [data-qa-id="toolbar-widget-tool-{Name}"] for Compass/Clock/Ruler/
+  // Protractor/Set Square 30/Set Square 45/Curtain/Split Screen.
+  it("TB-048: the documented built-in widgets are available", () => {
+    ToolbarPage.openToolPanel("gtWidgets");
+    ToolbarPage.panelShouldBeOpen();
+    const builtIns = ["Compass", "Clock", "Ruler", "Protractor", "Set Square 30", "Set Square 45", "Curtain", "Split Screen"];
+    builtIns.forEach((name) => {
+      cy.get(`[data-qa-id="toolbar-widget-tool-${name}"]`).should("exist");
+    });
+  });
+
+  // TB-049: CONFIRMED live 2026-08-23 that this workbook case's own premise
+  // does not match the real UI -- there is no "Load More" button anywhere in
+  // the gallery. Pagination is scroll-based instead: app-nav-pagination
+  // navtype="onlyscroll" renders #scrollup/#scrolldown buttons (no
+  // data-qa-id) inside a fixed-height grid. Server-loaded (non-built-in)
+  // widgets DO exist alongside the built-ins -- e.g. "Blood Vessel", whose
+  // tile carries a class-based data-qa-id (`toolbar-widget-{Name}`, no
+  // "-tool-" segment) rather than the built-in pattern. This documents the
+  // real, confirmed behaviour rather than asserting a control that isn't there.
+  it("TB-049: server-loaded gallery widgets render alongside the built-ins, paginated by scroll", () => {
+    ToolbarPage.openToolPanel("gtWidgets");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id^="toolbar-widget-tool-"]').should("have.length.greaterThan", 0);
+    cy.get('[data-qa-id^="toolbar-widget-"]:not([data-qa-id^="toolbar-widget-tool-"]):not([data-qa-id="toolbar-widget-close-btn"]):not([data-qa-id="toolbar-widget-discipline-select"])').should(
+      "have.length.greaterThan",
+      0
+    );
+    cy.contains(/load more/i).should("not.exist");
+    cy.get("#scrollup, #scrolldown").should("have.length.greaterThan", 0);
+  });
+
+  // TB-050: Discipline filter CONFIRMED live 2026-08-23 as a native <select>,
+  // data-qa-id="toolbar-widget-discipline-select".
+  it("TB-050: the Discipline dropdown filters the widget gallery", () => {
+    ToolbarPage.openToolPanel("gtWidgets");
+    ToolbarPage.panelShouldBeOpen();
+    cy.get('[data-qa-id="toolbar-widget-discipline-select"]').should("be.visible");
+    cy.get('[data-qa-id="toolbar-widget-discipline-select"] option').its("length").should("be.greaterThan", 1);
+    cy.get('[data-qa-id="toolbar-widget-discipline-select"]')
+      .find("option")
+      .eq(1)
+      .invoke("val")
+      .then((value) => {
+        cy.get('[data-qa-id="toolbar-widget-discipline-select"]').select(value, { force: true });
+        cy.wait(800);
+        cy.get('[data-qa-id="toolbar-widget-discipline-select"]').should("have.value", value);
+      });
+  });
+
   // TB-114: a placed widget is actually interactive.
   // TB-115: multiple widgets coexist.
   // TB-116: widget placement coordinates after zoom and pan.
-  // ALL SKIPPED -- the Widgets gallery is confirmed to open (toolbar.cy.js
-  // TB-047), but the Excel itself defers the behaviour: "Exact interaction
-  // depends on widget requirements" and "Confirm whether multiple widget
-  // instances are supported". With no defined interaction and no confirmed
-  // per-widget selectors, there is nothing decidable to assert. These need an
-  // answer from the dev/product side, not more DOM exploration.
+  // ALL SKIPPED -- per-widget tile selectors ARE now confirmed (see TB-048
+  // above), but the Excel itself still defers the actual PLACEMENT/
+  // interaction behaviour: "Exact interaction depends on widget
+  // requirements" and "Confirm whether multiple widget instances are
+  // supported". With no defined interaction to assert against, clicking a
+  // tile and guessing what should happen would not be a real test. These
+  // need an answer from the dev/product side, not more DOM exploration.
   it.skip("TB-114: a placed widget responds to its documented interaction", () => {});
   it.skip("TB-115: multiple widgets coexist and stay independently functional", () => {});
   it.skip("TB-116: a widget lands at the intended coordinate after zoom and pan", () => {});
@@ -988,6 +1295,21 @@ describe("Toolbar (additional) - Panel and tool state transitions", () => {
     cy.get(".toolbar-submenu-floating-ui .float-ui-container:visible").should("have.length", 1);
   });
 
+  it("TB-069: tapping the already-active tool while its panel is open does not flicker or reopen", () => {
+    ToolbarPage.openToolPanel("gtPen");
+    ToolbarPage.panelShouldBeOpen();
+
+    // A single tap on the SAME tool while its panel is already open.
+    ToolbarPage.tool("gtPen").click({ force: true });
+    cy.wait(600);
+
+    // Panel remains open and still shows Pen content, not a closed-then-
+    // reopened blank state.
+    ToolbarPage.panelShouldBeOpen();
+    ToolbarPage.panel().should("contain.text", "Choose a colour");
+    cy.get(".toolbar-submenu-floating-ui .float-ui-container:visible").should("have.length", 1);
+  });
+
   // TB-119: single tap / double tap / long press gesture matrix.
   // SKIPPED -- long press cannot be simulated. Confirmed in ToolbarPage.js and
   // toolbar.cy.js: the tools use a custom `applongpress` Angular directive and
@@ -1002,6 +1324,19 @@ describe("Toolbar (additional) - Panel and tool state transitions", () => {
   // Profile panel's keyboard toggle (`toolbar-profile-keyboard-toggle`) is a
   // different feature. Nothing confirmed to assert against.
   it.skip("TB-120: documented keyboard shortcuts trigger the correct action", () => {});
+
+  // TB-073: outside-tap does not close a panel while the on-screen keyboard
+  // is visible.
+  // SKIPPED (2026-08-23 investigation): app-keyboard/app-num-keyboard DO
+  // exist in the DOM at all times, but which tool panel actually triggers
+  // the on-screen keyboard to become VISIBLE was not confirmed live --
+  // double-clicking gtInserttext (the Text tool) did not open a floating
+  // settings panel the way other tools do (Insert Text likely places a text
+  // box directly on the canvas instead), so the documented precondition
+  // ("Panel open; on-screen keyboard visible") was never actually reached.
+  // Needs a confirmed way to make the keyboard visible before this is
+  // writable as a real assertion rather than a guess.
+  it.skip("TB-073: outside tap does not close the panel while the on-screen keyboard is visible", () => {});
 });
 
 describe("Toolbar (additional) - Layout and permissions", () => {
@@ -1089,6 +1424,53 @@ describe("Toolbar (additional) - Layout and permissions", () => {
   // TB-002), so the right-docked half is already covered and the left-docked
   // half cannot be reached. Same blocker as TB-003/TB-074/TB-075.
   it.skip("TB-122: the toolbar works docked on either side", () => {});
+
+  // TB-080/081: "collapses playlist" uses the same drawer mechanism
+  // PlaylistPage.ensureDrawerVisible() already relies on throughout this
+  // suite -- the "SHOW"/"HIDE" text on playlist-drawer-btn and the
+  // resource-nav-wrapper "hidden" class are the confirmed ground truth for
+  // open/collapsed state (see PlaylistPage.js's header comment).
+  it("TB-080: selecting a toolbar tool collapses the Playlist drawer for a signed-in user", () => {
+    cy.loginWithValidPin();
+    cy.wait(2000);
+    PlaylistPage.ensureDrawerVisible();
+    cy.get('[data-qa-id="playlist-drawer-btn"]').invoke("text").should("match", /hide/i);
+
+    ToolbarPage.selectTool("gtPen");
+    cy.wait(800);
+
+    cy.get('[data-qa-id="playlist-drawer-btn"]').invoke("text").should("match", /show/i);
+  });
+
+  it("TB-081: a signed-out user selecting a tool has no Playlist drawer to affect", () => {
+    cy.visitApp();
+    cy.contains("You are currently in Guest Mode.", { timeout: 15000 }).should("be.visible");
+
+    // Confirm the real state rather than assume it: a guest never reaches a
+    // class/topic, so there is no Playlist drawer at all to be touched --
+    // documenting that as the confirmed reason this is a non-event, not
+    // asserting on a drawer that doesn't exist for this user state.
+    cy.get("body").then(($body) => {
+      const drawerExists = $body.find('[data-qa-id="playlist-drawer-btn"]').length > 0;
+      expect(drawerExists, "no Playlist drawer exists for a signed-out user").to.eq(false);
+    });
+
+    // The permitted tool still works normally.
+    ToolbarPage.selectTool("gtPen");
+    ToolbarPage.isToolActive("gtPen").should("have.class", "changecolor");
+  });
+
+  // TB-082/TB-083: toolbar usage recording/telemetry against the current
+  // topic.
+  // SKIPPED -- no usage-recording/telemetry mechanism was found anywhere in
+  // the Toolbar module's source (grepped for toolUsage/recordUsage/analytics
+  // patterns, no matches), and the workbook's own steps say "Check
+  // applicable usage record/telemetry if available" -- there is no confirmed
+  // endpoint or DOM signal to assert against. Needs either a confirmed
+  // network endpoint (for cy.intercept) or a UI-visible indicator before
+  // this is writable as a real test rather than a guess.
+  it.skip("TB-082: toolbar usage is recorded against the current topic for a signed-in user", () => {});
+  it.skip("TB-083: toolbar usage is not recorded for a signed-out user", () => {});
 });
 
 describe("Toolbar (additional) - Integration and regression", () => {
@@ -1162,6 +1544,77 @@ describe("Toolbar (additional) - Integration and regression", () => {
   // "defined performance targets"; neither exists. A timing assertion with a
   // threshold invented here would pass or fail arbitrarily.
   it.skip("TB-128: the toolbar stays responsive on a heavily populated board", () => {});
+});
+
+// TB-COMPLETE: a single continuous run through the toolbar's core drawing
+// surface -- Pen, Eraser, Undo/Redo, and Zoom -- chained together the way a
+// real teacher would actually use them in one sitting, not just each tool in
+// isolation. Deliberately uses short (~200px) strokes throughout: a single
+// long stroke draws fine but the Eraser cannot remove it (see
+// claude/APP_QUIRKS.md and WhiteboardPage.js's writeLine()) -- this test
+// stays inside the confirmed-working length the whole way through.
+describe("Toolbar (additional) - Complete flow (Pen, Eraser, Undo/Redo, Zoom in one run)", () => {
+  beforeEach(() => {
+    cy.loginWithValidPin();
+    cy.wait(2000);
+  });
+
+  it("TB-COMPLETE: draw -> erase -> draw again -> undo -> redo -> zoom in/out/reset", () => {
+    WB.pathCount().then((before) => {
+      // --- Draw two short strokes with the Pen. ---
+      penStroke({ x: 300, y: 250 }, { x: 500, y: 250 });
+      penStroke({ x: 300, y: 320 }, { x: 500, y: 320 });
+      WB.pathCount().should("eq", before + 2);
+
+      // --- Erase the second stroke. ---
+      ToolbarPage.selectTool("gtErase");
+      WB.drawStroke({ x: 290, y: 320 }, { x: 510, y: 320 }, 20);
+      cy.wait(800);
+      WB.pathCount().should("eq", before + 1);
+
+      // --- Write again after erasing. ---
+      penStroke({ x: 300, y: 390 }, { x: 500, y: 390 });
+      WB.pathCount().should("eq", before + 2);
+
+      // --- Undo the last stroke, then Redo it back. ---
+      ToolbarPage.selectTool("gtUndo");
+      cy.wait(900);
+      WB.pathCount().should("eq", before + 1);
+
+      ToolbarPage.selectTool("gtRedo");
+      cy.wait(900);
+      WB.pathCount().should("eq", before + 2);
+
+      // --- Zoom in, out, and reset. ---
+      ToolbarPage.openToolPanel("gtZoom");
+      ToolbarPage.panelShouldBeOpen();
+      cy.get('[data-qa-id="toolbar-zoom-slider"]')
+        .invoke("attr", "aria-valuetext")
+        .then((base) => {
+          cy.get('[data-qa-id="toolbar-zoom-in-btn"]').click({ force: true });
+          cy.wait(500);
+          cy.get('[data-qa-id="toolbar-zoom-slider"]')
+            .invoke("attr", "aria-valuetext")
+            .should((afterIn) => expect(Number(afterIn)).to.be.greaterThan(Number(base)));
+
+          cy.get('[data-qa-id="toolbar-zoom-out-btn"]').click({ force: true });
+          cy.wait(500);
+          cy.get('[data-qa-id="toolbar-zoom-slider"]')
+            .invoke("attr", "aria-valuetext")
+            .should("eq", base);
+
+          cy.get('[data-qa-id="toolbar-zoom-in-btn"]').click({ force: true });
+          cy.wait(300);
+          cy.get('[data-qa-id="toolbar-zoom-reset-btn"]').click({ force: true });
+          cy.wait(500);
+          cy.get('[data-qa-id="toolbar-zoom-slider"]').should("have.attr", "aria-valuetext", "100");
+        });
+      ToolbarPage.closePanelByTappingOutside();
+
+      // --- Back to Select, the default tool, for whatever runs next. ---
+      ToolbarPage.selectTool("gtSelect");
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -9,5 +9,8 @@ allure-report/
 # cypress.env.json and fill it in, or pass CYPRESS_* environment variables.
 cypress.env.json
 
+# Real password/PIN values from live Change Password/PIN test runs -- never commit.
+claude/CREDENTIAL_HISTORY.md
+
 # Temporary exploration specs -- run explicitly via --spec, never part of a suite run.
 cypress/scratch/

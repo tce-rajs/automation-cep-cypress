@@ -20,10 +20,19 @@
 // Playlist cards do NOT expose their resource type in any confirmed
 // attribute, and the workbook forbids inventing selectors, so the app's own
 // Filter Resources -> "Worksheet" is used as the type test: with that filter
-// applied, every [data-qa-id="playlist-resource-card"] left on the strip is a
-// worksheet. Note this is a PLAYLIST-level filter, not curriculum navigation
-// -- it does not move the teacher off the class they are on, which is why it
-// is allowed inside the "do not navigate" branch.
+// applied, every worksheet card left on the strip is a worksheet. Note this
+// is a PLAYLIST-level filter, not curriculum navigation -- it does not move
+// the teacher off the class they are on, which is why it is allowed inside
+// the "do not navigate" branch.
+//
+// CONFIRMED live 2026-08-23: curriculum-native worksheets render as
+// [data-qa-id="playlist-resource-card"], but teacher/admin-uploaded
+// worksheets (confirmed present on the current target class/topic -- 13 of
+// them, via Filter Resources) render as [data-qa-id="playlist-asset-card"]
+// instead, same distinction PlaylistPage.goToComputerScienceProjectChapter()
+// documented for Image/Weblink. CARD_SELECTOR covers both so the precondition
+// check doesn't wrongly conclude "no worksheet available" when uploaded ones
+// exist.
 //
 // The filter persists on the account, so specs must restore it (see
 // restoreFilter) exactly as the previous version did.
@@ -33,7 +42,7 @@ import { PlayerPage } from "./PlayerPage";
 
 export const WorksheetPlayerPage = {
   FILTER_TYPE: "Worksheet",
-  CARD_SELECTOR: '[data-qa-id="playlist-resource-card"]',
+  CARD_SELECTOR: '[data-qa-id="playlist-resource-card"], [data-qa-id="playlist-asset-card"]',
 
   // The PDF viewer's own text is not reliably real DOM text, so the file
   // fetch is what confirms a document actually loaded. Registered before the
@@ -115,7 +124,12 @@ export const WorksheetPlayerPage = {
     this.cards().should("have.length.greaterThan", 0);
 
     cy.intercept("GET", this.FILE_REQUEST).as("resourceFile");
-    PlayerPage.openFirstResourceCard();
+    // Not PlayerPage.openFirstResourceCard(): that hardcodes only
+    // [data-qa-id="playlist-resource-card"], which is exactly the selector
+    // CARD_SELECTOR above had to broaden past (see this file's header
+    // comment) -- using it here would silently click nothing when every
+    // worksheet on the strip is an uploaded playlist-asset-card.
+    this.cards().first().click({ force: true });
     cy.wait("@resourceFile", { timeout: 15000 });
     cy.wait(1000);
     return PlayerPage.shouldBeOpen();
