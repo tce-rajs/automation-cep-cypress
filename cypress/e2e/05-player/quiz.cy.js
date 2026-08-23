@@ -95,32 +95,61 @@ describe("Quiz Player", () => {
     Quiz.incorrectOptions().should("not.exist");
   });
 
+  // CONFIRMED live 2026-08-22: Quiz.ANSWERS was hardcoded against the quiz
+  // that quizClass.js used to point at (Class 7A | English Language). After
+  // retargeting quizClass.js to Class 12A | Computer Science (a different
+  // quiz, different correct answers), those hardcoded indices went stale --
+  // exactly the kind of staleness a static answer map risks whenever the
+  // target class changes. Both cases below now discover the real correct
+  // index live via Show Answer first, rather than trusting a map.
   it("TC-QUIZ-012: submitting the correct answer marks it Correct", () => {
     Quiz.open(Quiz.MCQ_QUIZ);
     Quiz.goToQuestion(1);
+    Quiz.showAnswer();
+    Quiz.correctOptions().should("have.length", 1);
+    Quiz.correctOptions()
+      .invoke("index")
+      .then((correctIndex) => {
+        // Reopen fresh so Show Answer's revealed state doesn't interfere
+        // with a normal submit-based flow.
+        Quiz.close();
+        Quiz.open(Quiz.MCQ_QUIZ);
+        Quiz.goToQuestion(1);
 
-    Quiz.selectOption(Quiz.ANSWERS[1].index);
-    Quiz.submit();
+        Quiz.selectOption(correctIndex);
+        Quiz.submit();
 
-    Quiz.options().eq(Quiz.ANSWERS[1].index).should("have.class", "correct");
-    Quiz.incorrectOptions().should("not.exist");
+        Quiz.options().eq(correctIndex).should("have.class", "correct");
+        Quiz.incorrectOptions().should("not.exist");
+      });
   });
 
   it("TC-QUIZ-013: submitting a wrong answer marks it Incorrect and shows the correct one", () => {
     Quiz.open(Quiz.MCQ_QUIZ);
     Quiz.goToQuestion(1);
+    Quiz.showAnswer();
+    Quiz.correctOptions()
+      .invoke("index")
+      .then((correctIndex) => {
+        const wrongIndex = correctIndex === 0 ? 1 : 0;
 
-    Quiz.selectOption(0);
-    Quiz.submit();
+        Quiz.close();
+        Quiz.open(Quiz.MCQ_QUIZ);
+        Quiz.goToQuestion(1);
 
-    Quiz.options().eq(0).should("have.class", "incorrect");
-    Quiz.options().eq(Quiz.ANSWERS[1].index).should("have.class", "correct");
+        Quiz.selectOption(wrongIndex);
+        Quiz.submit();
+
+        Quiz.options().eq(wrongIndex).should("have.class", "incorrect");
+        Quiz.options().eq(correctIndex).should("have.class", "correct");
+      });
   });
 
   it("TC-QUIZ-014: Next Question appears after submitting and moves to the next question", () => {
     Quiz.open(Quiz.MCQ_QUIZ);
     Quiz.goToQuestion(1);
-    Quiz.selectOption(Quiz.ANSWERS[1].index);
+    // Correctness doesn't matter for this case -- any selected option works.
+    Quiz.selectOption(0);
     Quiz.submit();
 
     Quiz.submitButton().should("not.exist");
@@ -137,8 +166,10 @@ describe("Quiz Player", () => {
     Quiz.correctOptions().should("not.exist");
     Quiz.showAnswer();
 
+    // Exactly one option gets marked correct -- which one is real app data,
+    // not something to hardcode (see TC-QUIZ-012's note on why the old
+    // static ANSWERS map went stale).
     Quiz.correctOptions().should("have.length", 1);
-    Quiz.options().eq(Quiz.ANSWERS[2].index).should("have.class", "correct");
   });
 
   it("TC-QUIZ-016: a question number opens that question and updates the indicator", () => {

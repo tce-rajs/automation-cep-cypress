@@ -6,11 +6,6 @@ export const QuizPlayerPage = {
   OPEN_ENDED_QUIZ: "My Exercise",
 
   QUESTION_COUNT: 7,
-  ANSWERS: {
-    1: { index: 1, label: "B" },
-    2: { index: 3, label: "D" },
-    3: { index: 1, label: "B" },
-  },
 
   CARD_SELECTOR: '[data-qa-id="playlist-quiz-card"] .resource-card',
   card(title) {

@@ -8,8 +8,33 @@ each is a different revision, so dropping one loses content.
 ```
 01_Login/          02_Navigation/     03_Add_Resource/
 04_Playlist/       05_Player/         06_Toolbar/
+07_Compass/         08_Attendance/       09_Minimap/
+10_AI_Notices/      11_Learning_Shorts/  12_AI_Homework/
+13_Whiteboard/      14_Account_Management/
 _archive/
 ```
+
+**07_Compass through 13_Whiteboard added 2026-08-23** — these seven modules had zero
+Test_Cases documentation before (each spec file's own header comment said so).
+Written using the same 8-sheet flow-based structure as the reworked
+Quiz/Code-Editor/Video workbooks (01_Flow, 02_Flow Branch, 03_Test Cases,
+04_Automation Steps, 05_Data-State Coverage, 06_Automation Mapping,
+07_Test Data, 08_Summary), grounded in cep2-workspace source plus everything
+already confirmed live through 2026-08-23. Each workbook's 03_Test Cases sheet
+has an "Automation Status" column marking exactly which cases are already
+automated, which are blocked (and why — missing selector, missing test data,
+confirmed dead code, external micro-frontend), and which are unblocked but not
+yet written.
+
+**14_Account_Management added 2026-08-23** — same 8-sheet structure. This module
+(Change Password, Change PIN, MFA, the toolbar profile popover) previously had
+zero documentation AND zero automation despite being security-relevant. 19 of
+28 cases are automated and live-verified; the rest are blocked on either a
+QA account in a specific server-flagged state (no known account qualifies) or
+would destroy the shared QA credentials the whole suite depends on if run for
+real — see the workbook and `claude/CREDENTIAL_HISTORY.md` (gitignored, real
+secrets) for the one deliberate exception run against the isolated run-folder
+account only.
 
 ## Which spec reads which workbook
 

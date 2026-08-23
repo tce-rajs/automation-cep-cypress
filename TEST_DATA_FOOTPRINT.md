@@ -24,18 +24,24 @@ Almost everything is written to the class configured in
 
 | Field | Current value |
 |---|---|
-| Grade | Class 8 |
+| Grade | Class 12 |
 | Division | A |
-| Subject | Computer Science |
-| Chapter | index 0 → **MS Access** |
-| Topic | index 0 → **1.1 Introduction to Database** |
+| Subject | Physics |
+| Chapter | index 0 → **Chapter 1. Electric Charges and Fields** |
+| Topic | index 0 → *(name not yet captured -- confirmed non-empty: 1 resource card + 1 asset card live, per `cypress/scratch/explore-12a.cy.js`)* |
+
+**2026-08-22: retargeted from Class 8A | Computer Science to Class 12A |
+Physics** (see `claude/PROJECT_NOTES.md`'s "Target class config" section).
+Any pre-2026-08-22 test data this suite created lives on the OLD Class 8A |
+Computer Science | MS Access location, not the one above -- a cleanup pass
+needs to account for both locations, not just the current one.
 
 Two exceptions write elsewhere:
 
 | Helper | Location | Used by |
 |---|---|---|
-| `PlaylistPage.goToHtmlChapterFirstTopic()` | Class 8A / Computer Science / **HTML** chapter, first topic | `player.cy.js` (Code Editor tests) |
-| `PlaylistPage.goToOtherSubject()` | Class 8A / **a different subject** (first non-Computer-Science) | TC-RLL-006, TC-NAV-025 — navigation only, **writes nothing** |
+| `PlaylistPage.goToComputerScienceCodeChapter()` | Class 12A / Computer Science / **"2. Exception Handling in Python"** chapter, first topic | `code-editor.cy.js` (Code Editor tests) |
+| `PlaylistPage.goToOtherSubject()` | Class 12A / **a different subject** (first non-Physics) | TC-RLL-006, TC-NAV-025 — navigation only, **writes nothing** |
 
 ---
 

@@ -118,6 +118,26 @@ way, the reason is almost always one of these.
    loads the resource's URL string directly into an iframe instead of
    fetching real note content, with no editing UI. Worth confirming it's
    actually meant to be tested before adding QA content for it.
+5. **The Eraser cannot remove a very long Pen stroke.** CONFIRMED live
+   2026-08-23, isolated in a minimal repro: a single continuous pen stroke
+   drawn ~700px long renders fine (path count goes up by one) but an Eraser
+   pass along the exact same line, same coordinates, removes nothing
+   (path count unchanged). The identical mechanics with a ~200px stroke
+   (matching `toolbar-additional.cy.js`'s TB-089/090 exactly) erase
+   correctly every time. Root cause not traced further than "stroke length
+   matters" -- possibly the app segments/simplifies very long freehand
+   paths in a way that breaks whatever identifies "the stroke under the
+   eraser" for removal. Workaround used in `WhiteboardPage.writeLine()`:
+   build any long line out of several short (~200px) strokes instead of one
+   long one. Affects WB-018.
+6. **The User Profile popover's "choose which form to open" gate uses AND
+   instead of OR.** `UserProfileTabComponent.isPasswordOrOtpOpen` is defined
+   as `isPasswordFormShown && isPinFromShown` in source. CONFIRMED live
+   2026-08-23: opening Change Password leaves the "Change PIN" entry link
+   fully visible and clickable right alongside the open form (and vice
+   versa) -- a user can open both forms at once, which the naming implies
+   shouldn't be possible. Affects ACC-017 (automated as a documented finding,
+   not a guess).
 
 ## Things that were tried and confirmed NOT to work
 

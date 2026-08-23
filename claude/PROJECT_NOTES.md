@@ -20,6 +20,8 @@ cypress/
 │   ├── 03-add-resource/   # Add Resource, Create, AI-Assist, Gallery, Library
 │   ├── 04-playlist/
 │   ├── 05-player/
+│   ├── 06-toolbar/
+│   ├── 07-compass/ .. 12-ai-homework/  # core flows, live-confirmed 2026-08-22 -- see MODULE_COVERAGE.md
 │   └── smoke/              # ~1 min sanity check covering every module
 ├── pages/                # Page Object Model -- one file per screen/feature
 ├── config/
@@ -43,10 +45,10 @@ reads from this one config file:
 
 ```js
 module.exports = {
-  grade: "Class 8",
+  grade: "Class 12",
   division: "A",
-  subject: "Computer Science",
-  chapter: "Photoshop",
+  subject: "Physics",
+  chapterIndex: 0,
   topicIndex: 0,
 };
 ```
@@ -56,18 +58,31 @@ spec that calls `PlaylistPage.goToTargetClass()` in its `beforeEach` picks
 up the change automatically -- currently used by Navigation's "Chapters and
 Topics" tests and every `beforeEach` in `add-resource.cy.js`.
 
+**2026-08-22: retargeted from Class 8A | Computer Science to Class 12A |
+Physics**, per instruction to make 12A the suite's primary class, with
+Chemistry as the second subject and Computer Science in 12A reserved
+specifically for Code Editor validation. Confirmed live (see
+`cypress/scratch/explore-12a.cy.js`'s dump): Physics has 14 chapters,
+Chemistry has 10, both mostly one Video resource per chapter's first topic
+(chapter 2 "Current Electricity" in Physics is empty -- avoid it). Computer
+Science has 14 chapters and is far richer -- several chapters mix Worksheet/
+Video/Quiz/Code resources in one topic.
+
 Two other Playlist/Player-specific navigation helpers exist independently
 and are NOT tied to this config, because they need very specific known
 content (not just "the current class"):
-- `PlaylistPage.goToKnownContentTopic()` — hardcoded to Class 8A | Computer
-  Science, "Photoshop" chapter, first topic. Confirmed to reliably contain
-  Video/Worksheets/Quiz/Unsupported resources. Used by `playlist.cy.js` and
-  most of `player.cy.js`.
-- `PlaylistPage.goToHtmlChapterFirstTopic()` — same class, "HTML" chapter,
-  first topic. Confirmed to contain a Code-type resource.
+- `PlaylistPage.goToKnownContentTopic()` — currently just calls
+  `goToTargetClass()` (Physics, chapter 0). Content is thin (one Video
+  resource) compared to the old Class 8A default -- specs that need
+  Worksheet/Quiz/Unsupported variety may need to look elsewhere (Computer
+  Science has it) rather than assume this topic provides it.
+- `PlaylistPage.goToComputerScienceCodeChapter()` — Class 12A | Computer
+  Science | "2. Exception Handling in Python" (chapter index 1), first
+  topic. Confirmed live to hold a real Code-type resource alongside
+  Worksheet and Video. Replaces the old `goToHtmlChapterFirstTopic()`.
 
-If the assigned class changes, these two may also need updating to point at
-a chapter/topic with equivalent content types, since they were chosen for
+If the assigned class changes, these may also need updating to point at a
+chapter/topic with equivalent content types, since they were chosen for
 their *content*, not just because they're "the" class.
 
 ## Page Object Model
@@ -116,6 +131,33 @@ for which). This isn't a permanent fix -- eventually all low indexes will be
 exhausted too. A real fix would need either a way to detect "is this already
 attached" before choosing an index, or a way to clean up test-attached
 resources, neither of which was built here.
+
+## Automating a module with no QA login available
+
+Every module through `06-toolbar/` was written with a live QA session open,
+selectors dumped straight from the real DOM. `07-compass/` through
+`12-ai-homework/` were written without one, using the app's own Angular
+source in the sibling `cep2-workspace` repo instead -- reading real
+`data-qa-id` attributes out of `.component.html` files rather than a live
+page. This is still "verify, don't guess" (see `claude/README.md`), just a
+different verification source, and it's a fine way to unblock module work
+when no QA login is available.
+
+If you do this:
+- Say so, loudly, in both the page object's header comment and the spec's
+  header comment -- cite the exact `cep2-workspace` file paths a selector
+  came from, and call the whole file "DOM-unconfirmed" until a real run
+  happens. Don't let it read as equivalent to the confirmed rows in
+  `claude/SELECTORS_REFERENCE.md`.
+- When something has no selector at all (dynamically-created SVG, a
+  separately-deployed micro-frontend, a third-party library's internal DOM),
+  document that gap explicitly rather than inventing a plausible-looking one
+  -- see `AiNoticesPage.js` and `AttendancePage.js` for examples.
+- Branch on real app state instead of assuming a fixed one where the source
+  shows a genuine decision point (e.g. `CompassPage.hasNoHomework`), the same
+  pattern `Test_Cases/README.md` describes for the Quiz/Code-Editor F02 check.
+- Update `MODULE_COVERAGE.md` in the same pass -- it has a running list of
+  which rows are DOM-unconfirmed and why.
 
 ## Allure reporting
 

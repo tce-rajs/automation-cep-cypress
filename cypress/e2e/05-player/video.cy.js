@@ -44,6 +44,36 @@ describe("Video Player", () => {
     PlayerPage.shouldBeClosed();
   });
 
+  // RE-TESTED live 2026-08-22 after the retarget to Class 12A | Physics
+  // finally made a second, distinct Video resource available (13 of 14
+  // chapters each carry their own -- the old account had only one Video
+  // resource anywhere, which is why this was previously skipped as
+  // uncreatable). The precondition is no longer the blocker.
+  //
+  // CONFIRMED BEHAVIOUR, and it contradicts the workbook's assumption:
+  // opening a second Video resource (chapter 1's, after chapter 0's is
+  // already open) leaves exactly ONE player wrapper on screen, not two --
+  // the second open replaces the first rather than stacking alongside it.
+  // Screenshot evidence: only the chapter-1 animation is present after both
+  // opens; chapter 0's is gone. This is either intentional single-player-at-
+  // -a-time behaviour for the tcevideo animation pipeline, or a real gap --
+  // that's a product question for the dev team, not something to guess at
+  // here. Asserting the CONFIRMED outcome rather than either "it works" or
+  // silently re-skipping with a stale reason.
+  it("TC-VID-014: opening a second video replaces the first rather than opening alongside it", () => {
+    PlayerPage.openFirstResourceCard();
+    cy.wait(6000);
+    PlayerPage.shouldBeOpen();
+
+    PlaylistPage.goToChapterTopic(1, 0);
+    PlaylistPage.filterToType("Video");
+    PlayerPage.openFirstResourceCard();
+    cy.wait(6000);
+
+    // Confirmed: cross-close DOES happen -- only one wrapper remains, not two.
+    cy.get(PlayerPage.closeIconSelector()).filter(":visible").should("have.length", 1);
+  });
+
   it("TC-VID-006: closing Video restores prior Whiteboard pan/zoom", () => {
     PlayerPage.whiteboardTransform().then((before) => {
       PlayerPage.openFirstResourceCard();
@@ -79,7 +109,6 @@ describe("Video Player", () => {
 
   // Needs controls/flows not yet located in the live DOM.
   it.skip("TC-VID-013: Pan tool disables video control interaction (no confirmed way to observe control interactivity in the injected player)", () => {});
-  it.skip("TC-VID-014: two videos open together without cross-close (only one Video resource exists in this curriculum)", () => {});
   it.skip("TC-VID-015: Close All Resources stops all video playback ('Close All Resources' control not located in the live DOM)", () => {});
   it.skip("TC-VID-016: failed video load does not leave spinner indefinitely (needs a forced server failure; no confirmed way to fail one resource)", () => {});
 });

@@ -161,3 +161,66 @@ queryable from a test.
 - Close: `button.closeIcon.btn`; split-screen: `button.closeIcon.btn.m-r4`
 - Options are Material CHECKBOXES but behave as SINGLE-ANSWER: selecting a
   second option clears the first.
+
+## Compass, Attendance, AI Notices, Learning Shorts, Minimap, AI Homework
+
+These were originally written without a live QA session (selectors read
+straight from the app's own Angular source in the sibling `cep2-workspace`
+repo -- still a real "don't guess" source, just not the usual DOM-dump one
+this file otherwise documents). All six were re-run live on 2026-08-22
+against Class 12A -- every selector below is now DOM-confirmed. AI Notices,
+Learning Shorts and Minimap came back fully green; Compass, Attendance and
+AI Homework surfaced real, confirmed gates the current class doesn't satisfy
+(no Exploreit widgets, no Attendance option in the Magnet submenu, and an
+app-level "grade or class seems incorrect" validation banner, respectively)
+-- see MODULE_COVERAGE.md's note on those three for exact detail. See each
+page object's own header comment for exact source file paths.
+
+**Toolbar → Magnet submenu** is the shared entry point for four of these six
+modules: `[data-qa-id="toolbar-tool-gtMagnet"]` opens it (only renders with
+an Academic Year present), then `[data-qa-id="toolbar-magnet-{event}"]`
+picks the item -- `gtAttendance`, `gtAINotices`, `gtScreenRecord` (Learning
+Shorts), `gtAIWorksheet` (AI Homework). Compass and Minimap are reached
+differently (see below).
+
+- **Compass** (`CompassPage.js`): floating button
+  `[data-qa-id="compass-trigger-btn"]` on the whiteboard itself (not the
+  toolbar) → `compass-analyseit-item` → branches on
+  `compass-no-homework-create` vs. real assignment data
+  (`compass-detail-view-list-btn` / `-view-questions-btn` /
+  `compass-list-assignment-{cxId}` / `compass-question-toggle-answer-btn`).
+- **Attendance** (`AttendancePage.js`): Magnet → `toolbar-magnet-gtAttendance`
+  → `[data-qa-id="attendance-container"]`. The actual student list/toggles
+  live in a separately-built micro-frontend (`tce-attendance`) with **no
+  selectors in this repo at all** -- do not guess them.
+- **AI Notices** (`AiNoticesPage.js`): Magnet → `toolbar-magnet-gtAINotices`.
+  The compose form (`ai-notices-title-input`, `-description-editor`,
+  `-class-checkbox-{i}`, `-send-btn`) is real, but only reachable via a
+  drag-select on the whiteboard + an approve button that is raw SVG with
+  **zero selector** -- currently unreachable from a test. Rephrase/Translate/
+  Grammar buttons exist but are confirmed dead code (their HTTP calls are
+  commented out in `notice-form-dialog.component.ts`).
+- **Learning Shorts** (`LearningShortsPage.js`): Magnet →
+  `toolbar-magnet-gtScreenRecord` → `learning-shorts-record-start-btn` (real
+  `getDisplayMedia`/`getUserMedia`, not automatable without media stubbing).
+  The Title/Attachments/Share/Send half is reachable a different way instead:
+  an owned Playlist asset card's `[data-qa-id="playlist-asset-overflow-icon-btn"]`
+  → `playlist-asset-send-btn` opens the same form pre-filled with an existing
+  video, no camera/mic involved.
+- **Minimap** (`MinimapPage.js`): Toolbar Zoom tool
+  (`[data-qa-id="toolbar-tool-gtZoom"]`) → `toolbar-zoom-minimap-btn` →
+  `[data-qa-id="minimap-container"]` (always in the DOM; visibility is a
+  `.visible` class, not presence). Canvas is `minimap-canvas`; header buttons
+  are `minimap-toggle-players-btn` (conditional on a Player already being
+  open), `minimap-reset-btn`, `minimap-close-btn`.
+- **AI Homework** (`AiHomeworkPage.js`): Magnet →
+  `toolbar-magnet-gtAIWorksheet` → `ai-homework-option-*` (type cards,
+  counters, `-generate-btn`) → `ai-homework-builder-*` (question cards +
+  click-based swipe-left/-right, NOT a real swipe gesture) →
+  `ai-homework-option-next-btn` → `ai-homework-assign-*` (title, class
+  checkboxes, due-date radios, `-send-btn`). A curriculum resolving to a
+  "lower grade" swaps the whole builder for a component with **zero
+  selectors anywhere** -- confirm the target class isn't one before trusting
+  this flow. Two sibling components (`ai-homework-select-*`,
+  `ai-homework-preview-*`) have real selectors but are confirmed dead code,
+  unreferenced in the actual render tree.

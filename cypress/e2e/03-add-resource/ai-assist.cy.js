@@ -239,6 +239,30 @@ describe("AI-Assist - Confirmation consistency and end-to-end flows", () => {
       AiAssistPage.playlistCardCount().should("be.greaterThan", before);
     });
   });
+
+  // TC-AI-COMPLETE: a single continuous run through BOTH tabs -- Video then
+  // Exercise -- attaching from each in the same session, rather than
+  // TC-AI-020/021's separate single-tab runs.
+  it("TC-AI-COMPLETE: attach from Videos, switch tabs, then attach from Exercise, in one run", () => {
+    AiAssistPage.open();
+    cy.contains(".mdc-tab__text-label", "Videos").click({ force: true });
+    AiAssistPage.playlistCardCount().then((afterOpen) => {
+      cy.get('[data-qa-id="ai-assist-video-thumb-1"]').click({ force: true });
+      cy.wait(1500);
+      cy.get('[data-qa-id="ai-assist-add-playlist-btn"]').should("be.visible").click({ force: true });
+      cy.wait(3000);
+      AiAssistPage.playlistCardCount().should("be.greaterThan", afterOpen);
+
+      AiAssistPage.playlistCardCount().then((afterVideo) => {
+        cy.contains(".mdc-tab__text-label", "Exercise").click({ force: true });
+        AiAssistPage.selectExerciseCheckbox(0);
+        AiAssistPage.selectExerciseCheckbox(1);
+        cy.get('[data-qa-id="ai-assist-add-playlist-btn"]').click({ force: true });
+        cy.wait(3000);
+        AiAssistPage.playlistCardCount().should("be.greaterThan", afterVideo);
+      });
+    });
+  });
 });
 
 describe("AI-Assist - Login guard", () => {

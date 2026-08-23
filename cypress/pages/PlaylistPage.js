@@ -221,16 +221,54 @@ export const PlaylistPage = {
     this.ensureDrawerVisible();
   },
 
-  // Targets the "HTML" chapter's first topic, originally chosen because it
-  // contained a Code-type resource. Confirmed via survey that Class 8A |
-  // Computer Science on the current Goyal Brothers account still has an
-  // "HTML" chapter (chapters are: MS Access, HTML, Loops in Python), so this
-  // keeps selecting by name rather than falling back to the first chapter.
+  // Targets Class 12A | Computer Science | "2. Exception Handling in Python"
+  // (chapter index 1), specifically for Code Editor validation -- per
+  // instruction, Computer Science in 12A is reserved for this rather than
+  // folded into the Physics/Chemistry-based targetClass.js.
   //
-  // CAVEAT: the chapter exists, but whether its first topic still contains a
-  // Code-type resource has NOT been re-confirmed on this account.
-  goToHtmlChapterFirstTopic() {
-    this.goToClass(targetClass.grade, targetClass.division, targetClass.subject);
-    this.goToChapterTopic("HTML", 0);
+  // CONFIRMED live via cypress/scratch/explore-12a.cy.js (2026-08-22): this
+  // chapter's first topic holds 4 resource cards whose type-icons are
+  // Worksheet, Video, Code (ic.code.svg), Worksheet -- a real Code-type
+  // resource, not a guess. Chapters 7 ("Searching") and 8 ("Understanding
+  // Data") also showed a Code icon if this one ever stops holding one.
+  //
+  // Replaces the old goToHtmlChapterFirstTopic(), which pointed at Class 8A |
+  // Computer Science | "HTML" -- stale after the 2026-08-22 retarget to 12A.
+  goToComputerScienceCodeChapter() {
+    this.goToClass("Class 12", "A", "Computer Science");
+    this.goToChapterTopic(1, 0);
+    this.ensureDrawerVisible();
+  },
+
+  // Targets Class 12A | Computer Science | "14. Project Based Learning"
+  // (chapter index 13) | its first topic, "14.1 Approaches for Solving
+  // Project" -- a QA-curated topic (support.admin account) that holds ALL
+  // SIX filterable resource types at once, confirmed live via the Filter
+  // Resources count dump: Video (1), Worksheets (2), Images (1), Quiz (1),
+  // Weblink (1), Code (1). Used by ImagePlayerPage/WeblinkPlayerPage since
+  // Image/Weblink resources exist nowhere else confirmed on this account.
+  //
+  // CONFIRMED: unlike curriculum-native resources (which render as
+  // [data-qa-id="playlist-resource-card"]), every resource at this topic
+  // renders as [data-qa-id="playlist-asset-card"] instead -- consistent with
+  // this being teacher/admin-uploaded custom content rather than textbook
+  // curriculum. Callers must select on playlist-asset-card here, not
+  // playlist-resource-card.
+  goToComputerScienceProjectChapter() {
+    this.goToClass("Class 12", "A", "Computer Science");
+    this.goToChapterTopic(13, 0);
+    this.ensureDrawerVisible();
+  },
+
+  // Targets Class 12A | Physics | Chapter 14 "Semiconductor Electronics..."
+  // | its first topic -- the one confirmed live (via user-provided
+  // screenshot, then cypress/scratch/out/explore-ebook.json) to have an
+  // E-book: "(CE Crystal) NCERT Physics Class 12", 15 chapters, 1 linked
+  // resource on the chapter opened by default. E-book is a per-chapter flag
+  // (hasEbook), not a filterable resource type -- see EbookPlayerPage.js.
+  goToPhysicsEbookChapter() {
+    this.goToClass("Class 12", "A", "Physics");
+    this.goToChapterTopic(13, 0);
+    this.ensureDrawerVisible();
   },
 };

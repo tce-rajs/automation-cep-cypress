@@ -161,16 +161,16 @@ export const CodeEditorPage = {
       PlaylistPage.settle();
       this.settleCards();
 
-      // Fallback: the configured target topic is not guaranteed to hold a Code
-      // resource (targetClass.js points at chapter 0 / topic 0, chosen for
-      // being stable, not for its content). The one Code resource confirmed on
-      // this account is "CE_Lists" in the HTML chapter's first topic, so try
-      // there before giving up. If a class with Code content is assigned
-      // later, point targetClass.js at it and this second hop stops firing.
+      // Fallback: targetClass.js points at Physics (chapter 0 / topic 0),
+      // which does NOT hold Code content -- Code Editor validation is
+      // deliberately routed through Class 12A | Computer Science instead (per
+      // instruction), confirmed to hold a real Code resource. If a class with
+      // Code content is assigned to targetClass.js later, this second hop
+      // stops firing.
       return this.cardCount().then((afterTarget) => {
         if (afterTarget === 0) {
-          cy.log("Target topic holds no Code resource either -- falling back to the HTML chapter's first topic");
-          PlaylistPage.goToHtmlChapterFirstTopic();
+          cy.log("Target topic holds no Code resource either -- falling back to Class 12A | Computer Science");
+          PlaylistPage.goToComputerScienceCodeChapter();
           PlaylistPage.settle();
           this.settleCards();
         }

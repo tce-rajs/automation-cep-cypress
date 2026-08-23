@@ -22,6 +22,15 @@ cypress_cep/
 │   │   ├── 03-add-resource/   # Add Resource, Create, AI-Assist, Gallery, Library
 │   │   ├── 04-playlist/
 │   │   ├── 05-player/
+│   │   ├── 06-toolbar/
+│   │   ├── 07-compass/          # confirmed pending -- Compass not available on the current class
+│   │   ├── 08-attendance/       # confirmed pending -- no Attendance option on this account
+│   │   ├── 09-minimap/          # core flow, confirmed
+│   │   ├── 10-ai-notices/       # core flow, confirmed
+│   │   ├── 11-learning-shorts/  # core flow, confirmed
+│   │   ├── 12-ai-homework/      # confirmed pending -- grade/subject not supported for generation
+│   │   ├── 13-whiteboard/       # Whiteboard shell -- header, clock, drawing surface, states
+│   │   ├── 14-account-management/  # Change Password/PIN, MFA, profile popover -- added 2026-08-23
 │   │   └── smoke/             # Fast ~1-minute demo covering every module's core flow
 │   │
 │   ├── pages/                # Page Object Model -- see below
@@ -31,7 +40,19 @@ cypress_cep/
 │   │   ├── GalleryPage.js
 │   │   ├── LibraryPage.js
 │   │   ├── AiAssistPage.js
-│   │   └── PlayerPage.js
+│   │   ├── PlayerPage.js
+│   │   ├── ToolbarPage.js
+│   │   ├── CompassPage.js
+│   │   ├── AttendancePage.js
+│   │   ├── MinimapPage.js
+│   │   ├── AiNoticesPage.js
+│   │   ├── LearningShortsPage.js
+│   │   ├── AiHomeworkPage.js
+│   │   ├── WhiteboardPage.js
+│   │   ├── AccountManagementPage.js
+│   │   ├── EbookPlayerPage.js
+│   │   ├── ImagePlayerPage.js
+│   │   └── WeblinkPlayerPage.js
 │   │
 │   ├── support/
 │   │   ├── commands.js        # Shared login commands (loginWithValidPin, etc.)
@@ -131,3 +152,17 @@ npm run test:report
 - `cypress/support/commands.js` holds the shared PIN/password login flows
   used by nearly every spec, via `cy.loginWithValidPin()` and
   `cy.loginWithValidPassword()`.
+- The `07-compass/` through `12-ai-homework/` specs cover modules that had
+  zero automation before 2026-08-22. All six were confirmed live against the
+  Class 12A account that day; three (AI Notices, Learning Shorts, Minimap)
+  came back green, and three (Compass, Attendance, AI Homework) surfaced
+  real, confirmed content/config gates the current class doesn't satisfy --
+  see [MODULE_COVERAGE.md](MODULE_COVERAGE.md)'s note on those three.
+- `13-whiteboard/` (added 2026-08-23) and `14-account-management/` (added
+  2026-08-23) are the two newest modules, also previously undocumented and
+  unautomated. Account Management in particular is security-relevant
+  (Change Password, Change PIN, MFA) -- see its own header comment and
+  `claude/CREDENTIAL_HISTORY.md` (gitignored) before touching anything
+  destructive there.
+- **[PENDING_TASKS.md](PENDING_TASKS.md)** tracks anything currently open
+  or mid-investigation -- check it before assuming any area is finished.
